@@ -1,0 +1,766 @@
+{% extends "base.html" %}
+
+{% block title %}Digital Governance | SCFMS{% endblock %}
+
+{% block content %}
+<!-- Hero Section with Professional Government Design -->
+<div class="relative min-h-screen w-screen flex flex-col justify-between -m-6 overflow-hidden">
+    
+    <!-- Background with Subtle Gradient and Patterns -->
+    <div class="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+        <!-- Subtle Grid Pattern -->
+        <div class="absolute inset-0 opacity-5" style="background-image: linear-gradient(90deg, #fff 1px, transparent 1px), linear-gradient(#fff 1px, transparent 1px); background-size: 50px 50px;"></div>
+        
+        <!-- Animated Gradient Orbs (Very Subtle) -->
+        <div class="absolute top-20 left-10 w-96 h-96 bg-saffron/5 rounded-full filter blur-3xl animate-float"></div>
+        <div class="absolute bottom-32 right-20 w-80 h-80 bg-green-i/5 rounded-full filter blur-3xl animate-float" style="animation-delay: 3s;"></div>
+        <div class="absolute top-1/3 right-1/4 w-72 h-72 bg-blue-500/3 rounded-full filter blur-3xl animate-float" style="animation-delay: 1.5s;"></div>
+    </div>
+    
+    <!-- Top Tricolor Bar - Enhanced -->
+    <div class="h-1 flex w-full absolute top-0 left-0 z-20 shadow-2xl">
+        <div class="flex-1 bg-saffron"></div>
+        <div class="flex-1 bg-white"></div>
+        <div class="flex-1 bg-green-i"></div>
+    </div>
+
+    <!-- Content Container -->
+    <div class="flex-grow flex items-center justify-center p-4 pt-20 relative z-10">
+        <div class="w-full max-w-6xl mx-auto">
+            
+            <!-- Official Badge / Seal -->
+            <div class="text-center mb-12 animate-fade-in-down">
+                <div class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-white/8 border border-white/20 backdrop-blur-md hover:bg-white/12 transition duration-500">
+                    <span class="text-white/90 text-xs font-bold tracking-widest uppercase">🇮🇳 Government of India</span>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                
+                <!-- Left Content -->
+                <div class="space-y-8 animate-fade-in-left">
+                    
+                    <!-- Title with Gradient -->
+                    <div>
+                        <h1 class="text-5xl md:text-6xl font-bold mb-4 text-white leading-tight">
+                            <span class="inline-block">Smart City</span>
+                            <br />
+                            <span class="bg-gradient-to-r from-saffron via-white to-green-i bg-clip-text text-transparent font-black">Feedback Management</span>
+                        </h1>
+                        <p class="text-white/70 text-lg font-medium">A Digital India Initiative</p>
+                    </div>
+
+                    <!-- Sanskrit Motto -->
+                    <div class="p-6 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-white/20 transition duration-300">
+                        <p class="text-3xl font-bold text-saffron mb-2">"सेवा परमॊ धर्मः"</p>
+                        <p class="text-white/60 text-sm font-medium tracking-wide">Service is the highest form of duty</p>
+                    </div>
+
+                    <!-- Key Points -->
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-4 group">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-saffron/20 flex items-center justify-center mt-1 group-hover:bg-saffron/30 transition duration-300">
+                                <span class="text-lg">✓</span>
+                            </div>
+                            <div>
+                                <h3 class="text-white font-semibold mb-1">Transparent Governance</h3>
+                                <p class="text-white/60 text-sm">End-to-end tracking from complaint to resolution</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 group">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-green-i/20 flex items-center justify-center mt-1 group-hover:bg-green-i/30 transition duration-300">
+                                <span class="text-lg">✓</span>
+                            </div>
+                            <div>
+                                <h3 class="text-white font-semibold mb-1">AI-Powered Intelligence</h3>
+                                <p class="text-white/60 text-sm">Smart prioritization for faster resolution</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 group">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mt-1 group-hover:bg-blue-500/30 transition duration-300">
+                                <span class="text-lg">✓</span>
+                            </div>
+                            <div>
+                                <h3 class="text-white font-semibold mb-1">Citizen Empowerment</h3>
+                                <p class="text-white/60 text-sm">Your voice, your community, your governance</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Content - Action Cards -->
+                <div class="space-y-6 animate-fade-in-right">
+                    
+                    <!-- Citizen Portal Card -->
+                    <div class="group relative overflow-hidden rounded-2xl">
+                        <div class="absolute inset-0 bg-gradient-to-br from-saffron/20 to-orange-500/20 opacity-0 group-hover:opacity-100 transition duration-500 blur-xl"></div>
+                        <div class="relative p-8 rounded-2xl backdrop-blur-xl bg-white/10 border border-white/20 group-hover:border-saffron/50 transition duration-500 shadow-2xl group-hover:shadow-2xl">
+                            
+                            <!-- Icon -->
+                            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-saffron to-orange-500 flex items-center justify-center mb-6 group-hover:scale-110 transition duration-300 shadow-lg">
+                                <span class="text-2xl">👥</span>
+                            </div>
+
+                            <!-- Content -->
+                            <h3 class="text-2xl font-bold text-white mb-2">Citizen Portal</h3>
+                            <p class="text-white/70 text-sm mb-6 leading-relaxed">
+                                Submit grievances and track progress in real-time with full transparency
+                            </p>
+
+                            <!-- Features -->
+                            <div class="space-y-3 mb-8">
+                                <div class="flex items-center gap-2 text-sm text-white/80">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-saffron"></span>
+                                    <span>24/7 Access</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm text-white/80">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-saffron"></span>
+                                    <span>Real-time Updates</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm text-white/80">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-saffron"></span>
+                                    <span>No Registration Required</span>
+                                </div>
+                            </div>
+
+                            <!-- Button -->
+                            <a href="/public/" 
+                               class="w-full inline-flex items-center justify-center py-3 px-6 rounded-xl bg-gradient-to-r from-saffron to-orange-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold transition duration-300 shadow-lg hover:shadow-2xl transform group-hover:scale-105">
+                                Access Dashboard
+                                <span class="ml-2">→</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Government Official Card -->
+                    <div class="group relative overflow-hidden rounded-2xl">
+                        <div class="absolute inset-0 bg-gradient-to-br from-green-i/20 to-emerald-500/20 opacity-0 group-hover:opacity-100 transition duration-500 blur-xl"></div>
+                        <div class="relative p-8 rounded-2xl backdrop-blur-xl bg-white/10 border border-white/20 group-hover:border-green-i/50 transition duration-500 shadow-2xl">
+                            
+                            <!-- Icon -->
+                            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-green-i to-emerald-600 flex items-center justify-center mb-6 group-hover:scale-110 transition duration-300 shadow-lg">
+                                <span class="text-2xl">🏛️</span>
+                            </div>
+
+                            <!-- Content -->
+                            <h3 class="text-2xl font-bold text-white mb-2">Government Portal</h3>
+                            <p class="text-white/70 text-sm mb-6 leading-relaxed">
+                                Manage grievances with AI insights and advanced analytics tools
+                            </p>
+
+                            <!-- Features -->
+                            <div class="space-y-3 mb-8">
+                                <div class="flex items-center gap-2 text-sm text-white/80">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-green-i"></span>
+                                    <span>AI Prioritization</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm text-white/80">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-green-i"></span>
+                                    <span>Advanced Analytics</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm text-white/80">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-green-i"></span>
+                                    <span>Secure Access</span>
+                                </div>
+                            </div>
+
+                            <!-- Button -->
+                            <a href="/go-login/" 
+                               class="w-full inline-flex items-center justify-center py-3 px-6 rounded-xl bg-gradient-to-r from-green-i to-emerald-600 hover:from-green-700 hover:to-teal-700 text-white font-semibold transition duration-300 shadow-lg hover:shadow-2xl transform group-hover:scale-105">
+                                Official Login
+                                <span class="ml-2">→</span>
+                            </a>
+                            <a href="/go-register/" class="mt-4 w-full text-center text-sm text-white/70 hover:text-green-i transition duration-200 font-medium">
+                                Request Access for Officials
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Bar at Bottom -->
+            <div class="mt-16 grid grid-cols-3 md:grid-cols-3 gap-4 animate-fade-in-up delay-500">
+                <div class="text-center p-4 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm hover:border-white/20 transition duration-300">
+                    <div class="text-2xl md:text-3xl font-bold text-saffron">12.3K+</div>
+                    <p class="text-white/60 text-xs md:text-sm mt-2 font-medium">Complaints Registered</p>
+                </div>
+                <div class="text-center p-4 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm hover:border-white/20 transition duration-300">
+                    <div class="text-2xl md:text-3xl font-bold text-green-i">72%</div>
+                    <p class="text-white/60 text-xs md:text-sm mt-2 font-medium">Resolution Rate</p>
+                </div>
+                <div class="text-center p-4 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm hover:border-white/20 transition duration-300">
+                    <div class="text-2xl md:text-3xl font-bold text-blue-400">120+</div>
+                    <p class="text-white/60 text-xs md:text-sm mt-2 font-medium">Departments Connected</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Tricolor Bar - Enhanced -->
+    <div class="h-1 flex w-full shadow-2xl">
+        <div class="flex-1 bg-saffron"></div>
+        <div class="flex-1 bg-white"></div>
+        <div class="flex-1 bg-green-i"></div>
+    </div>
+</div>
+
+
+<!-- ============================= -->
+<!-- NEW LOWER SECTION BEGINS HERE -->
+<!-- ============================= -->
+
+<!-- Why SCFMS - Features Section -->
+<section class="relative bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white py-28 overflow-hidden">
+    <!-- Background Elements -->
+    <div class="absolute top-0 left-10 w-96 h-96 bg-saffron/5 rounded-full filter blur-3xl -z-10"></div>
+    <div class="absolute bottom-0 right-10 w-96 h-96 bg-green-i/5 rounded-full filter blur-3xl -z-10"></div>
+    <div class="absolute inset-0 opacity-5" style="background-image: linear-gradient(90deg, #fff 1px, transparent 1px), linear-gradient(#fff 1px, transparent 1px); background-size: 50px 50px; -z-index: -1;"></div>
+    
+    <div class="max-w-6xl mx-auto px-6 relative z-10">
+        <div class="text-center mb-20 animate-fade-in-down">
+            <div class="inline-block mb-4 px-6 py-2 rounded-lg bg-saffron/20 text-saffron font-bold text-sm tracking-widest border border-saffron/40 backdrop-blur-sm">CORE FEATURES</div>
+            <h2 class="text-5xl md:text-6xl font-bold mb-4 text-white">Why SCFMS?</h2>
+            <p class="text-lg text-white/70 mb-12 max-w-3xl mx-auto leading-relaxed">
+                A comprehensive platform combining <span class="text-saffron font-semibold">transparency</span>, <span class="text-green-i font-semibold">intelligence</span>, and <span class="text-blue-400 font-semibold">accountability</span>
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <!-- Card 1 - Transparency -->
+            <div class="group relative animate-fade-in-left" style="animation-delay: 0.1s">
+                <div class="absolute inset-0 bg-gradient-to-br from-saffron/30 to-orange-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-2xl"></div>
+                <div class="relative p-10 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 group-hover:border-saffron/50 transition duration-500 group-hover:shadow-2xl h-full hover:translate-y-[-8px]">
+                    <div class="w-16 h-16 bg-gradient-to-br from-saffron to-orange-500 rounded-xl flex items-center justify-center text-white text-3xl mb-6 group-hover:scale-110 transition duration-300 shadow-lg">
+                        👁️
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3 text-white">Complete Transparency</h3>
+                    <p class="text-white/70 leading-relaxed">Real-time tracking from submission to resolution with complete audit trails. Every step is documented and accessible.</p>
+                    <div class="mt-6 h-1 w-8 bg-gradient-to-r from-saffron to-orange-500 rounded-full"></div>
+                </div>
+            </div>
+
+            <!-- Card 2 - AI Prioritization -->
+            <div class="group relative animate-fade-in-up" style="animation-delay: 0.2s">
+                <div class="absolute inset-0 bg-gradient-to-br from-green-i/30 to-emerald-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-2xl"></div>
+                <div class="relative p-10 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 group-hover:border-green-i/50 transition duration-500 group-hover:shadow-2xl h-full hover:translate-y-[-8px]">
+                    <div class="w-16 h-16 bg-gradient-to-br from-green-i to-emerald-600 rounded-xl flex items-center justify-center text-white text-3xl mb-6 group-hover:scale-110 transition duration-300 shadow-lg">
+                        🧠
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3 text-white">AI-Powered Intelligence</h3>
+                    <p class="text-white/70 leading-relaxed">Machine learning algorithms analyze and prioritize grievances by urgency and impact, ensuring faster and smarter resolutions.</p>
+                    <div class="mt-6 h-1 w-8 bg-gradient-to-r from-green-i to-emerald-600 rounded-full"></div>
+                </div>
+            </div>
+
+            <!-- Card 3 - Citizen Empowerment -->
+            <div class="group relative animate-fade-in-right" style="animation-delay: 0.3s">
+                <div class="absolute inset-0 bg-gradient-to-br from-blue-400/30 to-blue-600/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-2xl"></div>
+                <div class="relative p-10 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 group-hover:border-blue-400/50 transition duration-500 group-hover:shadow-2xl h-full hover:translate-y-[-8px]">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center text-white text-3xl mb-6 group-hover:scale-110 transition duration-300 shadow-lg">
+                        🌟
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3 text-white">Citizen Empowerment</h3>
+                    <p class="text-white/70 leading-relaxed">Easy-to-use portal for citizens to report issues, track progress, and hold government accountable. Your voice matters.</p>
+                    <div class="mt-6 h-1 w-8 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="relative bg-gradient-to-b from-slate-50 to-white text-slate-900 py-28 overflow-hidden">
+    <!-- Background Elements -->
+    <div class="absolute top-0 left-0 w-96 h-96 bg-saffron/5 rounded-full filter blur-3xl -z-10"></div>
+    <div class="absolute bottom-0 right-0 w-96 h-96 bg-green-i/5 rounded-full filter blur-3xl -z-10"></div>
+    
+    <div class="max-w-6xl mx-auto px-6 relative z-10">
+        <div class="text-center mb-20 animate-fade-in-down">
+            <div class="inline-block mb-4 px-6 py-2 rounded-lg bg-blue-100 text-blue-700 font-bold text-sm tracking-widest border border-blue-300">PROCESS</div>
+            <h2 class="text-5xl md:text-6xl font-bold mb-4 text-slate-900">How It Works</h2>
+            <p class="text-lg text-slate-600 mb-12 max-w-3xl mx-auto leading-relaxed">A seamless system designed to connect citizens and government officials in a transparent, efficient grievance resolution process.</p>
+        </div>
+
+        <!-- Steps Grid -->
+        <div class="grid md:grid-cols-3 gap-8 mb-16">
+            <!-- Step 1 -->
+            <div class="relative group animate-fade-in-left" style="animation-delay: 0.1s">
+                <div class="absolute inset-0 bg-gradient-to-br from-saffron/10 to-orange-300/10 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-xl"></div>
+                <div class="relative p-8 rounded-2xl bg-white border-2 border-slate-200 group-hover:border-saffron/50 transition duration-300 group-hover:shadow-xl hover:translate-y-[-4px]">
+                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-saffron to-orange-500 text-white flex items-center justify-center text-2xl font-bold mb-6 shadow-lg">
+                        1
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">Submit Grievance</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">Citizens report issues through an intuitive mobile-friendly interface. No complex forms, just your concern.</p>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="relative group animate-fade-in-up" style="animation-delay: 0.2s">
+                <div class="absolute inset-0 bg-gradient-to-br from-green-i/10 to-emerald-300/10 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-xl"></div>
+                <div class="relative p-8 rounded-2xl bg-white border-2 border-slate-200 group-hover:border-green-i/50 transition duration-300 group-hover:shadow-xl hover:translate-y-[-4px]">
+                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-green-i to-emerald-600 text-white flex items-center justify-center text-2xl font-bold mb-6 shadow-lg">
+                        2
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">AI Analysis & Priority</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">Our AI system analyzes severity, category, and location to prioritize grievances efficiently.</p>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="relative group animate-fade-in-right" style="animation-delay: 0.3s">
+                <div class="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-blue-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-xl"></div>
+                <div class="relative p-8 rounded-2xl bg-white border-2 border-slate-200 group-hover:border-blue-400/50 transition duration-300 group-hover:shadow-xl hover:translate-y-[-4px]">
+                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center text-2xl font-bold mb-6 shadow-lg">
+                        3
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">Resolution & Tracking</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">Government officials manage and resolve grievances. Citizens receive real-time updates every step.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Section -->
+        <div class="relative max-w-4xl mx-auto animate-fade-in-up" style="animation-delay: 0.4s">
+            <div class="absolute inset-0 bg-gradient-to-r from-saffron/30 via-green-i/20 to-blue-400/30 rounded-3xl opacity-30 blur-2xl"></div>
+            <div class="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-slate-300 hover:border-slate-400 transition duration-300">
+                <iframe class="w-full aspect-video"
+                        src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                        title="SCFMS Demo Video"
+                        allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Live Stats Section -->
+<section class="relative bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 text-white py-28 overflow-hidden">
+    <!-- Background Elements -->
+    <div class="absolute inset-0 opacity-5" style="background-image: linear-gradient(90deg, #fff 1px, transparent 1px), linear-gradient(#fff 1px, transparent 1px); background-size: 50px 50px; -z-index: 0;"></div>
+    <div class="absolute top-0 left-20 w-96 h-96 bg-saffron/10 rounded-full filter blur-3xl animate-float"></div>
+    <div class="absolute bottom-0 right-20 w-96 h-96 bg-green-i/10 rounded-full filter blur-3xl animate-float" style="animation-delay: 3s;"></div>
+    
+    <div class="max-w-6xl mx-auto px-6 relative z-10">
+        <div class="text-center mb-20 animate-fade-in-down">
+            <div class="inline-block mb-4 px-6 py-2 rounded-lg bg-saffron/30 text-saffron font-bold text-sm tracking-widest border border-saffron/50 backdrop-blur-sm">STATISTICS</div>
+            <h2 class="text-5xl md:text-6xl font-bold mb-4 text-white">Our Impact</h2>
+            <p class="text-lg text-white/70 mb-12">Transforming governance, one complaint at a time.</p>
+        </div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <!-- Stat 1 -->
+            <div class="group relative animate-fade-in-left" style="animation-delay: 0.1s">
+                <div class="absolute inset-0 bg-gradient-to-br from-saffron/30 to-orange-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-2xl"></div>
+                <div class="relative p-8 text-center rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 group-hover:border-saffron/50 transition duration-300 group-hover:shadow-2xl hover:translate-y-[-8px]">
+                    <div class="text-5xl md:text-6xl font-black text-saffron mb-3 group-hover:scale-110 transition duration-300">12.3K+</div>
+                    <p class="text-white/80 font-semibold text-sm md:text-base">Complaints Registered</p>
+                    <div class="mt-4 h-1 w-8 bg-gradient-to-r from-saffron to-orange-500 rounded-full mx-auto"></div>
+                </div>
+            </div>
+
+            <!-- Stat 2 -->
+            <div class="group relative animate-fade-in-up" style="animation-delay: 0.2s">
+                <div class="absolute inset-0 bg-gradient-to-br from-green-i/30 to-emerald-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-2xl"></div>
+                <div class="relative p-8 text-center rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 group-hover:border-green-i/50 transition duration-300 group-hover:shadow-2xl hover:translate-y-[-8px]">
+                    <div class="text-5xl md:text-6xl font-black text-green-i mb-3 group-hover:scale-110 transition duration-300">72%</div>
+                    <p class="text-white/80 font-semibold text-sm md:text-base">Resolution Rate</p>
+                    <div class="mt-4 h-1 w-8 bg-gradient-to-r from-green-i to-emerald-600 rounded-full mx-auto"></div>
+                </div>
+            </div>
+
+            <!-- Stat 3 -->
+            <div class="group relative animate-fade-in-up" style="animation-delay: 0.3s">
+                <div class="absolute inset-0 bg-gradient-to-br from-blue-400/30 to-blue-600/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-2xl"></div>
+                <div class="relative p-8 text-center rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 group-hover:border-blue-400/50 transition duration-300 group-hover:shadow-2xl hover:translate-y-[-8px]">
+                    <div class="text-5xl md:text-6xl font-black text-blue-400 mb-3 group-hover:scale-110 transition duration-300">25K+</div>
+                    <p class="text-white/80 font-semibold text-sm md:text-base">Active Citizens</p>
+                    <div class="mt-4 h-1 w-8 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full mx-auto"></div>
+                </div>
+            </div>
+
+            <!-- Stat 4 -->
+            <div class="group relative animate-fade-in-right" style="animation-delay: 0.4s">
+                <div class="absolute inset-0 bg-gradient-to-br from-purple-400/30 to-purple-600/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-2xl"></div>
+                <div class="relative p-8 text-center rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 group-hover:border-purple-400/50 transition duration-300 group-hover:shadow-2xl hover:translate-y-[-8px]">
+                    <div class="text-5xl md:text-6xl font-black text-purple-400 mb-3 group-hover:scale-110 transition duration-300">120+</div>
+                    <p class="text-white/80 font-semibold text-sm md:text-base">Departments</p>
+                    <div class="mt-4 h-1 w-8 bg-gradient-to-r from-purple-400 to-purple-600 rounded-full mx-auto"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- About / Mission Section -->
+<section class="relative bg-gradient-to-b from-slate-50 to-white text-slate-900 py-28 overflow-hidden">
+    <!-- Background Elements -->
+    <div class="absolute top-0 right-0 w-96 h-96 bg-saffron/5 rounded-full filter blur-3xl -z-10"></div>
+    <div class="absolute bottom-0 left-0 w-96 h-96 bg-green-i/5 rounded-full filter blur-3xl -z-10"></div>
+    
+    <div class="max-w-5xl mx-auto px-6 relative z-10">
+        <div class="text-center mb-16 animate-fade-in-down">
+            <div class="inline-block mb-4 px-6 py-2 rounded-lg bg-green-i/20 text-green-i font-bold text-sm tracking-widest border border-green-i/40">MISSION</div>
+            <h2 class="text-5xl md:text-6xl font-bold mb-4 text-slate-900">About SCFMS</h2>
+            <p class="text-lg text-slate-600">Understanding our vision and commitment</p>
+        </div>
+        
+        <div class="grid md:grid-cols-2 gap-12 items-center animate-fade-in-up" style="animation-delay: 0.2s">
+            <!-- Left Content -->
+            <div class="space-y-6">
+                <div class="space-y-4">
+                    <h3 class="text-3xl font-bold text-slate-900 mb-6">Smart Governance for Modern India</h3>
+                    
+                    <p class="text-lg text-slate-700 leading-relaxed">
+                        The <span class="font-bold text-saffron">Smart City Feedback Management System (SCFMS)</span> is a digital initiative under the <span class="font-bold">Digital India Program</span> designed to transform how citizens and governments interact.
+                    </p>
+                    
+                    <p class="text-lg text-slate-700 leading-relaxed">
+                        We bridge communication gaps through transparency, empower citizens with voice, and equip government officials with AI-driven insights for smarter decision-making.
+                    </p>
+                </div>
+
+                <!-- Mission Points -->
+                <div class="space-y-4 pt-6">
+                    <div class="flex gap-4 group">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-saffron/20 flex items-center justify-center group-hover:bg-saffron/30 transition duration-300">
+                            <span class="text-lg">🎯</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 mb-1">Transparency</h4>
+                            <p class="text-slate-600 text-sm">Every grievance tracked end-to-end with complete audit trails</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 group">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-green-i/20 flex items-center justify-center group-hover:bg-green-i/30 transition duration-300">
+                            <span class="text-lg">⚡</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 mb-1">Efficiency</h4>
+                            <p class="text-slate-600 text-sm">AI-powered prioritization for faster resolutions</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4 group">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-400/20 flex items-center justify-center group-hover:bg-blue-400/30 transition duration-300">
+                            <span class="text-lg">👥</span>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 mb-1">Empowerment</h4>
+                            <p class="text-slate-600 text-sm">Citizens have a voice in governance decisions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Content - Featured Box -->
+            <div class="relative group">
+                <div class="absolute inset-0 bg-gradient-to-br from-saffron/20 to-green-i/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-2xl"></div>
+                <div class="relative p-10 rounded-2xl bg-gradient-to-br from-white to-slate-50 border-2 border-slate-300 group-hover:border-saffron/50 transition duration-500 group-hover:shadow-2xl">
+                    <div class="text-5xl mb-6 font-bold text-transparent bg-gradient-to-r from-saffron via-white to-green-i bg-clip-text">सेवा परमॊ धर्मः</div>
+                    <p class="text-slate-600 text-lg mb-6 leading-relaxed italic">"Service is the highest form of duty"</p>
+                    
+                    <div class="h-1 w-16 bg-gradient-to-r from-saffron to-green-i rounded-full mb-6"></div>
+                    
+                    <p class="text-slate-700 leading-relaxed font-medium mb-6">
+                        This ancient Indian principle guides our mission. We are committed to serving citizens and strengthening governance through transparent, intelligent, and accountable systems.
+                    </p>
+                    
+                    <div class="grid grid-cols-3 gap-4 pt-6 border-t border-slate-300">
+                        <div class="text-center">
+                            <div class="text-3xl font-black text-saffron">🇮🇳</div>
+                            <p class="text-xs text-slate-600 mt-2 font-semibold">Digital India</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-black text-green-i">🏙️</div>
+                            <p class="text-xs text-slate-600 mt-2 font-semibold">Smart Cities</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-black text-blue-600">⚖️</div>
+                            <p class="text-xs text-slate-600 mt-2 font-semibold">Governance</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer Section -->
+<footer class="relative bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
+    <!-- Background Elements -->
+    <div class="absolute inset-0 opacity-5" style="background-image: linear-gradient(90deg, #fff 1px, transparent 1px), linear-gradient(#fff 1px, transparent 1px); background-size: 50px 50px; -z-index: 0;"></div>
+    <div class="absolute top-0 left-20 w-96 h-96 bg-saffron/10 rounded-full filter blur-3xl animate-float"></div>
+    <div class="absolute bottom-0 right-20 w-96 h-96 bg-green-i/10 rounded-full filter blur-3xl animate-float" style="animation-delay: 3s;"></div>
+    
+    <div class="max-w-6xl mx-auto px-6 py-20 relative z-10">
+        
+        <!-- Main Footer Content -->
+        <div class="grid md:grid-cols-4 gap-12 mb-16">
+            
+            <!-- Branding -->
+            <div class="animate-fade-in-left" style="animation-delay: 0.1s">
+                <h3 class="text-2xl font-bold mb-4 bg-gradient-to-r from-saffron to-green-i bg-clip-text text-transparent">SCFMS</h3>
+                <p class="text-white/70 text-sm leading-relaxed mb-6">
+                    Smart City Feedback Management System - Transforming governance through transparency and technology.
+                </p>
+                <div class="flex gap-4">
+                    <a href="#" class="w-10 h-10 rounded-lg bg-white/10 hover:bg-saffron/30 flex items-center justify-center transition duration-300">
+                        <span>f</span>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-lg bg-white/10 hover:bg-green-i/30 flex items-center justify-center transition duration-300">
+                        <span>t</span>
+                    </a>
+                    <a href="#" class="w-10 h-10 rounded-lg bg-white/10 hover:bg-blue-400/30 flex items-center justify-center transition duration-300">
+                        <span>in</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="animate-fade-in-up" style="animation-delay: 0.2s">
+                <h4 class="text-lg font-bold mb-6 text-white">Resources</h4>
+                <ul class="space-y-3">
+                    <li><a href="#" class="text-white/70 hover:text-saffron transition duration-200 font-medium">Documentation</a></li>
+                    <li><a href="#" class="text-white/70 hover:text-saffron transition duration-200 font-medium">FAQ</a></li>
+                    <li><a href="#" class="text-white/70 hover:text-saffron transition duration-200 font-medium">Blog</a></li>
+                    <li><a href="#" class="text-white/70 hover:text-saffron transition duration-200 font-medium">Support</a></li>
+                </ul>
+            </div>
+
+            <!-- Legal -->
+            <div class="animate-fade-in-up" style="animation-delay: 0.3s">
+                <h4 class="text-lg font-bold mb-6 text-white">Legal</h4>
+                <ul class="space-y-3">
+                    <li><a href="#" class="text-white/70 hover:text-green-i transition duration-200 font-medium">Privacy Policy</a></li>
+                    <li><a href="#" class="text-white/70 hover:text-green-i transition duration-200 font-medium">Terms of Service</a></li>
+                    <li><a href="#" class="text-white/70 hover:text-green-i transition duration-200 font-medium">Cookie Policy</a></li>
+                    <li><a href="#" class="text-white/70 hover:text-green-i transition duration-200 font-medium">Compliance</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact -->
+            <div class="animate-fade-in-right" style="animation-delay: 0.4s">
+                <h4 class="text-lg font-bold mb-6 text-white">Contact</h4>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-white/70 text-sm mb-1">Email</p>
+                        <a href="mailto:support@scfms.gov.in" class="text-saffron hover:text-orange-400 transition duration-200 font-semibold">
+                            support@scfms.gov.in
+                        </a>
+                    </div>
+                    <div>
+                        <p class="text-white/70 text-sm mb-1">Helpline</p>
+                        <a href="tel:+911800-123-4567" class="text-green-i hover:text-emerald-400 transition duration-200 font-semibold">
+                            +91-1800-123-4567
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="border-t border-white/10 py-8">
+            <!-- Bottom Section -->
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="text-center md:text-left animate-fade-in-left" style="animation-delay: 0.5s">
+                    <p class="text-white/60 text-sm">
+                        © 2025 Smart City Feedback Management System (SCFMS). All rights reserved.
+                    </p>
+                </div>
+                <div class="flex justify-center md:justify-end gap-6 animate-fade-in-right" style="animation-delay: 0.5s">
+                    <div class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 hover:border-saffron/50 transition duration-300">
+                        <span class="text-sm font-semibold">🇮🇳 Digital India</span>
+                    </div>
+                    <div class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 hover:border-green-i/50 transition duration-300">
+                        <span class="text-sm font-semibold">🏙️ Smart Cities</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Tricolor Bar -->
+        <div class="mt-12 h-1 flex w-full shadow-lg">
+            <div class="flex-1 bg-saffron"></div>
+            <div class="flex-1 bg-white"></div>
+            <div class="flex-1 bg-green-i"></div>
+        </div>
+    </div>
+</footer>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+/* ===== Smooth Animations ===== */
+
+/* Fade In Animations */
+@keyframes fadeInUp {
+    0% { 
+        opacity: 0; 
+        transform: translateY(30px); 
+    }
+    100% { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+@keyframes fadeInDown {
+    0% { 
+        opacity: 0; 
+        transform: translateY(-30px); 
+    }
+    100% { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+@keyframes fadeInLeft {
+    0% { 
+        opacity: 0; 
+        transform: translateX(-30px); 
+    }
+    100% { 
+        opacity: 1; 
+        transform: translateX(0); 
+    }
+}
+
+@keyframes fadeInRight {
+    0% { 
+        opacity: 0; 
+        transform: translateX(30px); 
+    }
+    100% { 
+        opacity: 1; 
+        transform: translateX(0); 
+    }
+}
+
+/* Floating Animation */
+@keyframes float {
+    0%, 100% { 
+        transform: translateY(0px); 
+    }
+    50% { 
+        transform: translateY(-20px); 
+    }
+}
+
+/* Pulse Animation */
+@keyframes pulse-smooth {
+    0%, 100% { 
+        opacity: 0.3; 
+    }
+    50% { 
+        opacity: 0.6; 
+    }
+}
+
+/* Glow Animation */
+@keyframes glow {
+    0%, 100% { 
+        box-shadow: 0 0 5px rgba(255, 153, 51, 0.3); 
+    }
+    50% { 
+        box-shadow: 0 0 20px rgba(255, 153, 51, 0.5); 
+    }
+}
+
+/* Animation Classes */
+.animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+    opacity: 0;
+}
+
+.animate-fade-in-down {
+    animation: fadeInDown 0.8s ease-out forwards;
+    opacity: 0;
+}
+
+.animate-fade-in-left {
+    animation: fadeInLeft 0.8s ease-out forwards;
+    opacity: 0;
+}
+
+.animate-fade-in-right {
+    animation: fadeInRight 0.8s ease-out forwards;
+    opacity: 0;
+}
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse {
+    animation: pulse-smooth 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-glow {
+    animation: glow 2s ease-in-out infinite;
+}
+
+/* Delay Classes */
+.delay-100 { animation-delay: 0.1s; }
+.delay-150 { animation-delay: 0.15s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-500 { animation-delay: 0.5s; }
+.delay-1000 { animation-delay: 1s; }
+
+/* Smooth Transition Defaults */
+* {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Glassmorphism Effect */
+.backdrop-blur-xl {
+    backdrop-filter: blur(32px);
+}
+
+.backdrop-blur-md {
+    backdrop-filter: blur(12px);
+}
+
+/* Gradient Text */
+.bg-clip-text {
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Enhanced Shadow */
+.shadow-2xl {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Grid Pattern Background */
+.grid-pattern {
+    background-image: 
+        linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+}
+
+/* Smooth Scale Transform */
+.group:hover .group-hover\:scale-110 {
+    transform: scale(1.1);
+}
+
+/* Better Text Rendering */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Responsive Animation Speed */
+@media (max-width: 768px) {
+    .animate-fade-in-up,
+    .animate-fade-in-down,
+    .animate-fade-in-left,
+    .animate-fade-in-right {
+        animation-duration: 0.6s;
+    }
+}
+</style>
+{% endblock %}

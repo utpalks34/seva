@@ -1,0 +1,2143 @@
+<!-- templates/go_dashboard.html -->
+{% extends "base.html" %}
+
+{% block title %}GO Dashboard - Complaint Management{% endblock %}
+
+{% block nav_links %}{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Government Dashboard - Complaint Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1e40af;
+            --primary-dark: #1e3a8a;
+            --primary-light: #3b82f6;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --bg-dark: #0f172a;
+            --bg-light: #f8fafc;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #e0f2fe 0%, #cffafe 50%, #dbeafe 100%);
+            background-size: 200% 200%;
+            color: var(--text-primary);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-dark) 0%, var(--primary-dark) 100%);
+            padding: 2rem 0;
+            z-index: 100;
+            overflow-y: auto;
+            box-shadow: 4px 0 20px rgba(15, 23, 42, 0.15);
+        }
+
+        .sidebar-header {
+            padding: 0 1.5rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header h2 {
+            color: white;
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-header p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 1.5rem 0;
+        }
+
+        .sidebar-nav li {
+            padding: 0.875rem 1.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            font-weight: 500;
+        }
+
+        .sidebar-nav li:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: var(--primary-light);
+            padding-left: 2rem;
+        }
+
+        .sidebar-nav li.active {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border-left-color: #60a5fa;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-container {
+            margin-left: 260px;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, var(--danger) 0%, #b91c1c 100%);
+            color: white;
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.2);
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.3);
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .kpi-card {
+            background: white;
+            padding: 1.75rem;
+            border-radius: 1rem;
+            border-top: 4px solid var(--primary-light);
+            box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+            transition: all 0.3s ease;
+            animation: slideInUp 0.5s ease-out, floatUp 3s ease-in-out infinite;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+        }
+
+        .kpi-card.warning {
+            border-top-color: var(--warning);
+        }
+
+        .kpi-card.success {
+            border-top-color: var(--success);
+        }
+
+        .kpi-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-card.warning .kpi-value {
+            color: var(--warning);
+        }
+
+        .kpi-card.success .kpi-value {
+            color: var(--success);
+        }
+
+        .kpi-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Analytics Section */
+        .analytics-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+            animation: slideInUp 0.5s ease-out 0.1s both, shimmer 6s ease-in-out infinite;
+            transition: all 0.3s ease;
+        }
+
+        .chart-card:hover {
+            box-shadow: 0 8px 32px rgba(30, 64, 175, 0.15);
+            transform: translateY(-4px);
+        }
+
+        .chart-card h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Map */
+        .map-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+            margin-bottom: 2.5rem;
+            animation: slideInUp 0.5s ease-out 0.2s both, shimmer 6s ease-in-out infinite 0.3s;
+            transition: all 0.3s ease;
+        }
+
+        .map-card:hover {
+            box-shadow: 0 8px 32px rgba(30, 64, 175, 0.15);
+            transform: translateY(-4px);
+        }
+
+        .map-card h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        #complaintMap {
+            height: 400px;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: white;
+            padding: 1.75rem;
+            border-radius: 1rem;
+            box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+            margin-bottom: 2.5rem;
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            animation: slideInUp 0.5s ease-out 0.3s both, shimmer 6s ease-in-out infinite 0.6s;
+            transition: all 0.3s ease;
+        }
+
+        .filter-section:hover {
+            box-shadow: 0 8px 32px rgba(30, 64, 175, 0.15);
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.625rem;
+        }
+
+        .filter-group select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-light);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
+            border-radius: 0.625rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .filter-group select:hover {
+            border-color: var(--primary-light);
+        }
+
+        .filter-group select:focus {
+            border-color: var(--primary-light);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-apply {
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 0.75rem 2.5rem;
+            border: none;
+            border-radius: 0.625rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-apply:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Table */
+        .table-card {
+            background: white;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+            animation: slideInUp 0.5s ease-out 0.4s both, shimmer 6s ease-in-out infinite 0.9s;
+            transition: all 0.3s ease;
+        }
+
+        .table-card:hover {
+            box-shadow: 0 8px 32px rgba(30, 64, 175, 0.15);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: linear-gradient(90deg, #f0f4f8 0%, #e2e8f0 100%);
+            border-bottom: 2px solid var(--border);
+        }
+
+        th {
+            padding: 1.25rem;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: var(--bg-light);
+        }
+
+        tbody tr.high-severity {
+            border-left: 4px solid var(--danger);
+        }
+
+        /* Severity */
+        .severity {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--danger);
+        }
+
+        /* Complaint Title */
+        .complaint-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .complaint-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .complaint-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            max-width: 400px;
+            white-space: normal;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-category {
+            background: #dbeafe;
+            color: var(--primary-dark);
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-progress {
+            background: #dbeafe;
+            color: var(--primary-dark);
+        }
+
+        .badge-resolved {
+            background: #dcfce7;
+            color: var(--success);
+        }
+
+        .submitted-date {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Action Button */
+        .btn-action {
+            padding: 0.625rem 1.25rem;
+            background: var(--primary-light);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-action:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
+        }
+
+        .btn-action:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes gradientShift {
+            0% {
+                background: linear-gradient(135deg, #e0f2fe 0%, #cffafe 50%, #dbeafe 100%);
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background: linear-gradient(135deg, #cffafe 0%, #dbeafe 50%, #e0f2fe 100%);
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background: linear-gradient(135deg, #e0f2fe 0%, #cffafe 50%, #dbeafe 100%);
+                background-position: 0% 50%;
+            }
+        }
+
+        @keyframes floatUp {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        @keyframes shimmer {
+
+            0%,
+            100% {
+                box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+            }
+
+            50% {
+                box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 220px;
+            }
+
+            .main-container {
+                margin-left: 220px;
+            }
+
+            .analytics-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                transition: all 0.3s ease;
+            }
+
+            .main-container {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group,
+            .btn-apply {
+                width: 100%;
+            }
+        }
+
+        /* ── Analytics Panel Styles ───────────────────────── */
+        .adv-analytics-panel {
+            display: none;
+        }
+
+        .adv-analytics-panel.active {
+            display: block;
+        }
+
+        .adv-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .adv-kpi-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem 1.75rem;
+            box-shadow: 0 2px 12px rgba(15, 23, 42, .08);
+            border-top: 4px solid var(--primary-light);
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+
+        .adv-kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(15, 23, 42, .12);
+        }
+
+        .adv-kpi-card.orange {
+            border-top-color: var(--warning);
+        }
+
+        .adv-kpi-card.green {
+            border-top-color: var(--success);
+        }
+
+        .adv-kpi-card.red {
+            border-top-color: var(--danger);
+        }
+
+        .adv-kpi-label {
+            font-size: .8rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            margin-bottom: .5rem;
+        }
+
+        .adv-kpi-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: var(--primary-light);
+        }
+
+        .adv-kpi-card.orange .adv-kpi-value {
+            color: var(--warning);
+        }
+
+        .adv-kpi-card.green .adv-kpi-value {
+            color: var(--success);
+        }
+
+        .adv-kpi-card.red .adv-kpi-value {
+            color: var(--danger);
+        }
+
+        .adv-kpi-sub {
+            font-size: .78rem;
+            color: var(--text-secondary);
+            margin-top: .25rem;
+        }
+
+        .adv-charts-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.75rem;
+        }
+
+        @media(max-width:1100px) {
+            .adv-charts-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media(max-width:700px) {
+            .adv-charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .adv-chart-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.75rem;
+            box-shadow: 0 2px 12px rgba(15, 23, 42, .08);
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+
+        .adv-chart-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(30, 64, 175, .12);
+        }
+
+        .adv-chart-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        /* Dept Performance Table */
+        .adv-dept-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .9rem;
+        }
+
+        .adv-dept-table th {
+            background: linear-gradient(90deg, #f0f4f8, #e2e8f0);
+            padding: .75rem 1rem;
+            text-align: left;
+            font-size: .78rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        .adv-dept-table td {
+            padding: .75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .adv-dept-table tr:hover td {
+            background: var(--bg-light);
+        }
+
+        .adv-dept-table .rate-bar {
+            display: inline-block;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--success), #34d399);
+            margin-right: .5rem;
+            vertical-align: middle;
+            min-width: 4px;
+        }
+
+        /* Heatmap */
+        #advHeatmap {
+            height: 420px;
+            border-radius: .75rem;
+            border: 1px solid var(--border);
+        }
+
+        /* Last-updated badge */
+        .adv-updated {
+            font-size: .75rem;
+            color: var(--text-secondary);
+            text-align: right;
+            margin-bottom: 1rem;
+        }
+
+        /* Loading skeleton pulse */
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .4
+            }
+        }
+
+        .adv-loading {
+            animation: pulse 1.5s infinite;
+            color: var(--text-secondary);
+            padding: 2rem;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>🛡️ Gov Portal</h2>
+            <p>Complaint Management</p>
+        </div>
+        <ul class="sidebar-nav">
+            <li id="navDashboard" class="active" onclick="showSection('dashboard')">📊 Dashboard</li>
+            <li id="navAnalytics" onclick="showSection('analytics')">📈 Analytics</li>
+            <li id="navReports" onclick="showSection('reports')">📄 Reports</li>
+            <li id="navOfficials">👥 Officials</li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📋 Complaint Management</h1>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span id="wsStatus" style="font-size: 14px; font-weight: bold; color: #059669;">🟡 Connecting...</span>
+                <button class="logout-btn" id="logoutBtn">🚪 Logout</button>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">📊 Total</div>
+                <div class="kpi-value" id="totalCount">0</div>
+                <div class="kpi-desc">All registered complaints</div>
+            </div>
+            <div class="kpi-card warning">
+                <div class="kpi-label">⚠️ Urgent</div>
+                <div class="kpi-value" id="highPriorityCount">0</div>
+                <div class="kpi-desc">High severity (>80%)</div>
+            </div>
+            <div class="kpi-card success">
+                <div class="kpi-label">✅ Resolved</div>
+                <div class="kpi-value" id="resolvedCount">0</div>
+                <div class="kpi-desc">Successfully closed</div>
+            </div>
+        </div>
+
+        <!-- Analytics -->
+        <div class="analytics-section">
+            <div class="chart-card">
+                <h3>📊 Categories Distribution</h3>
+                <canvas id="categoryChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>📈 Status Overview</h3>
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Map -->
+        <div class="map-card">
+            <h3>🗺️ Geospatial Heatmap</h3>
+            <div id="complaintMap"></div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-section">
+            <div class="filter-group">
+                <label>Status Filter</label>
+                <select id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="P">⏳ Pending</option>
+                    <option value="I">🔄 In Progress</option>
+                    <option value="R">✅ Resolved</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Category Filter</label>
+                <select id="categoryFilter">
+                    <option value="">All Categories</option>
+                    <option value="RO">🛣️ Roads/Potholes</option>
+                    <option value="GA">🗑️ Garbage/Waste</option>
+                    <option value="UT">💧 Utilities</option>
+                    <option value="PB">👥 Public Behavior</option>
+                    <option value="OT">📌 Other</option>
+                </select>
+            </div>
+            <button class="btn-apply" id="applyFilterBtn">🔍 Filter</button>
+        </div>
+
+        <!-- Complaints Table -->
+        <div id="dashboardSection">
+            <div class="table-card">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Severity</th>
+                                <th>Complaint</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Submitted</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="complaintsTableBody">
+                            <tr>
+                                <td colspan="6" class="empty-state">⏳ Loading complaints...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════
+         📊  ADVANCED ANALYTICS PANEL  (Feature #2)
+         ═══════════════════════════════════════════════════ -->
+        <div id="analyticsSection" class="adv-analytics-panel">
+
+            <div class="adv-updated" id="advLastUpdated">Fetching data…</div>
+
+            <!-- KPI Row -->
+            <div class="adv-kpi-grid">
+                <div class="adv-kpi-card">
+                    <div class="adv-kpi-label">📋 Total Complaints</div>
+                    <div class="adv-kpi-value" id="advTotal">—</div>
+                    <div class="adv-kpi-sub">All time</div>
+                </div>
+                <div class="adv-kpi-card green">
+                    <div class="adv-kpi-label">✅ Resolution Rate</div>
+                    <div class="adv-kpi-value" id="advRate">—</div>
+                    <div class="adv-kpi-sub">% of total resolved</div>
+                </div>
+                <div class="adv-kpi-card orange">
+                    <div class="adv-kpi-label">⏱️ Avg Resolution</div>
+                    <div class="adv-kpi-value" id="advAvgDays">—</div>
+                    <div class="adv-kpi-sub">days per complaint</div>
+                </div>
+                <div class="adv-kpi-card red">
+                    <div class="adv-kpi-label">🚨 High Priority</div>
+                    <div class="adv-kpi-value" id="advHighPriority">—</div>
+                    <div class="adv-kpi-sub">Severity ≥ 70</div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="adv-charts-row">
+                <!-- 30-day Trend -->
+                <div class="adv-chart-card">
+                    <h3>📈 30-Day Complaint Trend</h3>
+                    <canvas id="advTrendChart"></canvas>
+                </div>
+                <!-- Category Doughnut -->
+                <div class="adv-chart-card">
+                    <h3>🗂️ By Category</h3>
+                    <canvas id="advCategoryChart"></canvas>
+                </div>
+                <!-- Status Bar -->
+                <div class="adv-chart-card">
+                    <h3>📊 By Status</h3>
+                    <canvas id="advStatusChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Department Performance -->
+            <div class="adv-chart-card" style="margin-bottom:1.75rem">
+                <h3>🏛️ Department Performance</h3>
+                <div style="overflow-x:auto">
+                    <table class="adv-dept-table" id="advDeptTable">
+                        <thead>
+                            <tr>
+                                <th>Department</th>
+                                <th>Total</th>
+                                <th>Resolved</th>
+                                <th>Resolution Rate</th>
+                                <th>Avg Days</th>
+                            </tr>
+                        </thead>
+                        <tbody id="advDeptBody">
+                            <tr>
+                                <td colspan="5" class="adv-loading">Loading departments…</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Heatmap -->
+            <div class="adv-chart-card" style="margin-bottom:2rem">
+                <h3>🗺️ Complaint Density Heatmap</h3>
+                <div id="advHeatmap"></div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════ REPORTS SECTION ═══════════════════════ -->
+        <div id="reportsSection" style="display:none;padding:1.5rem 0;">
+            <div style="margin-bottom:1.5rem;">
+                <h2 style="font-size:1.55rem;font-weight:700;color:#1e293b;">📄 Report Generation</h2>
+                <p style="color:#64748b;font-size:.9rem;margin-top:.4rem;">Download professional PDF analytics reports
+                    for government review.</p>
+            </div>
+
+            <!-- 4 report cards -->
+            <div
+                style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.25rem;margin-bottom:1.75rem;">
+                <div
+                    style="background:#fff;border-radius:1rem;padding:1.5rem;box-shadow:0 4px 18px rgba(15,23,42,.08);border-top:4px solid #6366f1;">
+                    <div style="font-size:2rem;margin-bottom:.6rem;">📅</div>
+                    <h3 style="font-size:.95rem;font-weight:700;color:#1e293b;margin-bottom:.3rem;">Weekly Report</h3>
+                    <p style="font-size:.78rem;color:#64748b;margin-bottom:1rem;line-height:1.5;">Last 7 days —
+                        complaints, categories, department performance.</p>
+                    <button id="btn-weekly" onclick="downloadReport('weekly')"
+                        style="width:100%;background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border:none;border-radius:.5rem;padding:.65rem;font-size:.85rem;font-weight:700;cursor:pointer;">⬇️
+                        Download PDF</button>
+                </div>
+                <div
+                    style="background:#fff;border-radius:1rem;padding:1.5rem;box-shadow:0 4px 18px rgba(15,23,42,.08);border-top:4px solid #0f766e;">
+                    <div style="font-size:2rem;margin-bottom:.6rem;">🗓️</div>
+                    <h3 style="font-size:.95rem;font-weight:700;color:#1e293b;margin-bottom:.3rem;">Monthly Report</h3>
+                    <p style="font-size:.78rem;color:#64748b;margin-bottom:1rem;line-height:1.5;">Last 30 days — full
+                        metrics, resolution rates, duplicates. Recommended.</p>
+                    <button id="btn-monthly" onclick="downloadReport('monthly')"
+                        style="width:100%;background:linear-gradient(135deg,#0f766e,#10b981);color:#fff;border:none;border-radius:.5rem;padding:.65rem;font-size:.85rem;font-weight:700;cursor:pointer;">⬇️
+                        Download PDF</button>
+                </div>
+                <div
+                    style="background:#fff;border-radius:1rem;padding:1.5rem;box-shadow:0 4px 18px rgba(15,23,42,.08);border-top:4px solid #f59e0b;">
+                    <div style="font-size:2rem;margin-bottom:.6rem;">📊</div>
+                    <h3 style="font-size:.95rem;font-weight:700;color:#1e293b;margin-bottom:.3rem;">Quarterly Report
+                    </h3>
+                    <p style="font-size:.78rem;color:#64748b;margin-bottom:1rem;line-height:1.5;">Last 90 days —
+                        strategic overview for department heads.</p>
+                    <button id="btn-quarterly" onclick="downloadReport('quarterly')"
+                        style="width:100%;background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;border:none;border-radius:.5rem;padding:.65rem;font-size:.85rem;font-weight:700;cursor:pointer;">⬇️
+                        Download PDF</button>
+                </div>
+                <div
+                    style="background:#fff;border-radius:1rem;padding:1.5rem;box-shadow:0 4px 18px rgba(15,23,42,.08);border-top:4px solid #06b6d4;">
+                    <div style="font-size:2rem;margin-bottom:.6rem;">🗄️</div>
+                    <h3 style="font-size:.95rem;font-weight:700;color:#1e293b;margin-bottom:.3rem;">All-Time Report</h3>
+                    <p style="font-size:.78rem;color:#64748b;margin-bottom:1rem;line-height:1.5;">Complete historical
+                        data — full audit-ready document.</p>
+                    <button id="btn-all" onclick="downloadReport('all')"
+                        style="width:100%;background:linear-gradient(135deg,#06b6d4,#38bdf8);color:#fff;border:none;border-radius:.5rem;padding:.65rem;font-size:.85rem;font-weight:700;cursor:pointer;">⬇️
+                        Download PDF</button>
+                </div>
+            </div>
+
+            <!-- What's inside info -->
+            <div
+                style="background:linear-gradient(135deg,#eff6ff,#f0fdfa);border-radius:1rem;padding:1.25rem 1.5rem;border:1px solid #bfdbfe;margin-bottom:1rem;">
+                <h4 style="color:#1e40af;font-weight:700;margin-bottom:.6rem;font-size:.9rem;">📋 Every Report Includes:
+                </h4>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.35rem;">
+                    <div style="font-size:.8rem;color:#475569;">✅ Total / Pending / In-Progress / Resolved counts</div>
+                    <div style="font-size:.8rem;color:#475569;">✅ Resolution rate %</div>
+                    <div style="font-size:.8rem;color:#475569;">✅ High-priority &amp; duplicate complaint counts</div>
+                    <div style="font-size:.8rem;color:#475569;">✅ Category breakdown with bar chart</div>
+                    <div style="font-size:.8rem;color:#475569;">✅ Department performance table</div>
+                    <div style="font-size:.8rem;color:#475569;">✅ Top 10 most recent complaints</div>
+                </div>
+            </div>
+
+            <div id="rptStatus"
+                style="display:none;padding:.7rem 1.1rem;border-radius:.5rem;font-size:.86rem;font-weight:600;"></div>
+        </div><!-- end reportsSection -->
+
+    </div><!-- /.main-container -->
+
+
+    <script>
+        const GO_AUTH_TOKEN = localStorage.getItem('go_auth_token') || localStorage.getItem('auth_token');
+        const complaintsTableBody = document.getElementById('complaintsTableBody');
+        const statusFilter = document.getElementById('statusFilter');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const applyFilterBtn = document.getElementById('applyFilterBtn');
+
+
+
+        let complaintMap; // Global variable for the map instance
+        let categoryChartInstance;
+        let statusChartInstance;
+
+        // --- Helper Functions ---
+        const CATEGORY_NAMES = {
+            'RO': 'Roads/Potholes',
+            'GA': 'Garbage/Waste',
+            'UT': 'Utilities',
+            'PB': 'Public Behavior',
+            'OT': 'Other'
+        };
+        const STATUS_NAMES = { 'P': 'Pending', 'I': 'In Progress', 'R': 'Resolved' };
+        const CATEGORY_COLORS = {
+            'RO': '#f87171', // Red
+            'GA': '#a78bfa', // Purple
+            'UT': '#38bdf8', // Light Blue
+            'PB': '#facc15', // Yellow
+            'OT': '#d1d5db'  // Gray
+        };
+
+        function getStatusBadge(statusChar) {
+            let badgeClass = 'badge badge-pending';
+
+            switch (statusChar) {
+                case 'P':
+                    badgeClass = 'badge badge-pending';
+                    return `<span class="${badgeClass}">⏳ Pending</span>`;
+                case 'I':
+                    badgeClass = 'badge badge-progress';
+                    return `<span class="${badgeClass}">🔄 In Progress</span>`;
+                case 'R':
+                    badgeClass = 'badge badge-resolved';
+                    return `<span class="${badgeClass}">✅ Resolved</span>`;
+            }
+            return `<span class="badge">${STATUS_NAMES[statusChar] || 'Unknown'}</span>`;
+        }
+
+        function getCategoryName(code) {
+            return CATEGORY_NAMES[code] || 'Uncategorized';
+        }
+
+        // --- 1. Map Initialization (Leaflet.js) ---
+        function initMap(complaints) {
+            // Only initialize map once
+            if (complaintMap) {
+                complaintMap.remove();
+            }
+
+            // Use India's center coordinates or the first complaint location as default
+            const defaultLat = 20.5937;
+            const defaultLon = 78.9629;
+
+            complaintMap = L.map('complaintMap').setView([defaultLat, defaultLon], 5);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(complaintMap);
+
+            // Add markers for all complaints
+            let markersGroup = L.featureGroup();
+            let validCoords = 0;
+
+            complaints.forEach(complaint => {
+                const lat = parseFloat(complaint.latitude);
+                const lon = parseFloat(complaint.longitude);
+
+                if (lat && lon && complaint.status !== 'R') { // Only map pending/in-progress issues
+                    validCoords++;
+                    const markerColor = complaint.status === 'P' ? 'red' : 'blue';
+                    const marker = L.circleMarker([lat, lon], {
+                        radius: 8,
+                        fillColor: markerColor,
+                        color: markerColor,
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.7
+                    }).addTo(markersGroup);
+
+                    marker.bindPopup(`
+                    <strong>Severity: ${complaint.severity_score}%</strong><br>
+                    <strong>Title:</strong> ${complaint.title}<br>
+                    <strong>Status:</strong> ${STATUS_NAMES[complaint.status]}
+                `);
+                }
+            });
+
+            if (validCoords > 0) {
+                markersGroup.addTo(complaintMap);
+                // Optionally zoom to fit all markers
+                // complaintMap.fitBounds(markersGroup.getBounds());
+            } else {
+                console.log("No non-resolved complaints with valid coordinates to map.");
+            }
+        }
+
+
+        // --- 2. Chart Initialization (Chart.js) ---
+        function renderCharts(analyticsData) {
+            const categoryData = analyticsData.category_distribution;
+            const statusData = analyticsData.status_distribution;
+
+            // Destroy existing chart instances if they exist
+            if (categoryChartInstance) categoryChartInstance.destroy();
+            if (statusChartInstance) statusChartInstance.destroy();
+
+            // Prepare Category Data
+            const categoryLabels = categoryData.map(d => getCategoryName(d.category));
+            const categoryCounts = categoryData.map(d => d.count);
+            const categoryBackgrounds = categoryData.map(d => CATEGORY_COLORS[d.category] || '#4b5563');
+
+            // Render Category Chart (Donut)
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            categoryChartInstance = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: categoryLabels,
+                    datasets: [{
+                        data: categoryCounts,
+                        backgroundColor: categoryBackgrounds,
+                        hoverOffset: 4,
+                        borderColor: '#ffffff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#1e293b',
+                                font: { size: 13, weight: '600' },
+                                padding: 15,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 }
+                        }
+                    }
+                }
+            });
+
+            // Prepare Status Data
+            const statusLabels = statusData.map(d => STATUS_NAMES[d.status]);
+            const statusCounts = statusData.map(d => d.count);
+            const statusBackgrounds = statusData.map(d => {
+                if (d.status === 'P') return '#fbbf24';
+                if (d.status === 'I') return '#3b82f6';
+                if (d.status === 'R') return '#059669';
+                return '#94a3b8';
+            });
+
+            // Render Status Chart (Bar)
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            statusChartInstance = new Chart(statusCtx, {
+                type: 'bar',
+                data: {
+                    labels: statusLabels,
+                    datasets: [{
+                        label: 'Count',
+                        data: statusCounts,
+                        backgroundColor: statusBackgrounds,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.8)',
+                            padding: 12
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { color: '#1e293b', font: { weight: '600' } },
+                            grid: { color: '#e2e8f0' }
+                        },
+                        y: {
+                            ticks: { color: '#1e293b', font: { weight: '600' } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- 3. Action Button Generation and Update Handler (Same as before, moved here) ---
+        function generateActionButton(id, currentStatus) {
+            if (currentStatus === 'P') {
+                return `<button data-id="${id}" data-status="I" class="update-status-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs">Accept</button>`;
+            } else if (currentStatus === 'I') {
+                return `<button data-id="${id}" data-status="R" class="update-status-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded text-xs">Resolve</button>`;
+            } else {
+                return `<span class="text-green-500 text-xs">Closed</span>`;
+            }
+        }
+
+        async function updateComplaintStatus(complaintId, newStatus) {
+            const endpoint = `/api/govt/complaints/${complaintId}/`;
+
+            // Disable all buttons to prevent double-click while updating
+            document.querySelectorAll('.update-status-btn').forEach(btn => btn.disabled = true);
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Token ${GO_AUTH_TOKEN}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: newStatus }),
+                });
+
+                if (response.ok) {
+                    // Fetch new data to update table, metrics, and map (real-time feel)
+                    await fetchAndRenderComplaints();
+                    await fetchAnalytics();
+                    alert(`Complaint ${complaintId} status successfully updated to ${newStatus}. Citizen will be notified instantly via WebSocket!`);
+                } else {
+                    const errorData = await response.json();
+                    alert(`Update failed: ${errorData.error || response.statusText}`);
+                }
+
+            } catch (error) {
+                console.error('Error updating status:', error);
+                alert('Network error during status update.');
+            } finally {
+                // Re-enable buttons
+                document.querySelectorAll('.update-status-btn').forEach(btn => btn.disabled = false);
+            }
+        }
+
+        // --- 4. Data Fetching Functions ---
+
+        async function fetchAnalytics() {
+            try {
+                const response = await fetch('/api/govt/analytics/', {
+                    headers: { 'Authorization': `Token ${GO_AUTH_TOKEN}` }
+                });
+                if (!response.ok) throw new Error('Failed to fetch analytics');
+
+                const data = await response.json();
+
+                // Update Metrics
+                document.getElementById('totalCount').textContent = data.metrics.total_complaints;
+                document.getElementById('highPriorityCount').textContent = data.metrics.high_priority_count;
+                document.getElementById('resolvedCount').textContent = data.metrics.total_resolved_count;
+
+                // Render Charts
+                renderCharts(data);
+
+            } catch (error) {
+                console.error('Analytics Fetch Error:', error);
+            }
+        }
+
+        // ============================================================
+        //              🚨 WEBSOCKET REAL-TIME UPDATES
+        // ============================================================
+
+        function initWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const token = GO_AUTH_TOKEN || localStorage.getItem('go_auth_token') || localStorage.getItem('auth_token');
+            const wsUrl = `${protocol}//${window.location.host}/ws/notifications/?token=${token}`;
+
+            const ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                console.log('✅ WebSocket connected!');
+                document.getElementById('wsStatus').innerText = '🟢 Live';
+                document.getElementById('wsStatus').style.color = '#059669'; // green
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+
+                // Handle different message types
+                if (data.type === 'new_complaint') {
+                    console.log('📢 NEW COMPLAINT RECEIVED:', data);
+                    handleNewComplaintBroadcast(data);
+                }
+                else if (data.type === 'complaint_update') {
+                    console.log('🔄 COMPLAINT UPDATE:', data);
+                    handleComplaintUpdate(data);
+                }
+                else if (data.type === 'dashboard_update') {
+                    console.log('📊 DASHBOARD METRICS UPDATE:', data);
+                    updateDashboardMetrics(data);
+                }
+                else if (data.type === 'notification') {
+                    console.log('🔔 NOTIFICATION:', data.message);
+                    showNotificationToast(data.message);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('❌ WebSocket error:', error);
+                document.getElementById('wsStatus').innerText = '🔴 Disconnected';
+                document.getElementById('wsStatus').style.color = '#dc2626'; // red
+            };
+
+            ws.onclose = () => {
+                console.log('❌ WebSocket closed, reconnecting in 3 seconds...');
+                document.getElementById('wsStatus').innerText = '🟡 Reconnecting...';
+                document.getElementById('wsStatus').style.color = '#d97706'; // orange
+
+                // Auto-reconnect after 3 seconds
+                setTimeout(initWebSocket, 3000);
+            };
+        }
+
+        function handleNewComplaintBroadcast(data) {
+            /**
+             * When a citizen submits a complaint, it appears on GO dashboard instantly!
+             * No page refresh needed.
+             */
+
+            // Show toast notification
+            showNotificationToast(
+                `🚨 NEW COMPLAINT: "${data.title}" (Severity: ${data.severity_score}/100)`,
+                'info'
+            );
+
+            // Add sound notification (optional)
+            playNotificationSound();
+
+            // Re-fetch complaints to show the new one
+            fetchAndRenderComplaints();
+        }
+
+        function handleComplaintUpdate(data) {
+            /**
+             * When a complaint status changes (by any GO), all GOs see it in real-time.
+             */
+            console.log(`🔄 Complaint #${data.complaint_id} updated to ${data.status}`);
+
+            // Re-fetch complaints to update the list
+            fetchAndRenderComplaints();
+        }
+
+        function updateDashboardMetrics(data) {
+            /**
+             * Update dashboard counters in real-time as complaints come in.
+             */
+            document.getElementById('totalCount').textContent = data.total_complaints;
+            document.getElementById('pendingCount').textContent = data.pending;
+            document.getElementById('inProgressCount').textContent = data.in_progress;
+            document.getElementById('resolvedCount').textContent = data.resolved;
+        }
+
+        function showNotificationToast(message, type = 'success') {
+            /**
+             * Show a toast notification at the top of the screen.
+             */
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'info' ? '#3b82f6' : '#059669'};
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            z-index: 9999;
+            animation: slideIn 0.3s ease-in;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        `;
+            toast.innerText = message;
+
+            document.body.appendChild(toast);
+
+            // Remove after 4 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function playNotificationSound() {
+            /**
+             * Play a subtle notification sound (optional).
+             * You can uncomment if you want audio alerts.
+             */
+            // const audio = new Audio('/static/notification.mp3');
+            // audio.play().catch(e => console.log('Sound not available'));
+        }
+
+
+        async function fetchAndRenderComplaints() {
+            complaintsTableBody.innerHTML = '<tr><td colspan="6" class="no-data">⏳ Loading complaints...</td></tr>';
+
+            const status = statusFilter.value;
+            const category = categoryFilter.value;
+
+            let url = `/api/govt/complaints/?`;
+            if (status) url += `status=${status}&`;
+            if (category) url += `category=${category}&`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Token ${GO_AUTH_TOKEN}`, 'Content-Type': 'application/json' },
+                });
+
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                const data = await response.json();
+
+                // RENDER MAP HERE, USING ALL FETCHED DATA
+                // Map needs the raw list of complaint objects, not just the filtered results
+                initMap(data.results || []);
+
+                // Render table rows
+                complaintsTableBody.innerHTML = '';
+                const complaintsList = data.results || [];
+
+                if (complaintsList.length > 0) {
+                    complaintsList.forEach(complaint => {
+                        const row = document.createElement('tr');
+                        const rowClass = complaint.severity_score >= 80 ? 'high-severity' : '';
+                        row.className = rowClass;
+
+                        const submittedDate = new Date(complaint.created_at).toLocaleString();
+
+                        row.innerHTML = `
+                        <td class="severity">${complaint.severity_score}%</td>
+                        <td>
+                            <div class="complaint-info">
+                                <div class="complaint-title">${complaint.title}</div>
+                                <div class="complaint-desc">${complaint.description}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge badge-category">${getCategoryName(complaint.category)}</span>
+                        </td>
+                        <td>
+                            ${getStatusBadge(complaint.status)}
+                        </td>
+                        <td class="submitted-date">${submittedDate}</td>
+                        <td>
+                            <div style="display:flex;flex-direction:column;gap:5px;">
+                                ${generateActionButton(complaint.id, complaint.status)}
+                                ${complaint.status !== 'R' ? `<button
+                                    onclick="openMarkDuplicateModal(${complaint.id}, '${complaint.title.replace(/'/g, "\\'")}')"
+                                    style="background:#64748b;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-weight:600;"
+                                >🔗 Duplicate</button>` : ''}
+                            </div>
+                        </td>
+                    `;
+                        complaintsTableBody.appendChild(row);
+                    });
+                } else {
+                    complaintsTableBody.innerHTML = '<tr><td colspan="6" class="empty-state">📭 No complaints matching your filters</td></tr>';
+                }
+
+            } catch (error) {
+                console.error('Error fetching complaints:', error);
+                complaintsTableBody.innerHTML = `<tr><td colspan="6" class="no-data">❌ Error loading data. Check console.</td></tr>`;
+            }
+        }
+
+
+        // ─── Section toggle ───────────────────────────────────────────
+        let advTrendChart, advCategoryChart, advStatusChart;
+        let advHeatmapInstance;
+        let analyticsLoaded = false;
+
+        function showSection(section) {
+            const dashEl = document.getElementById('dashboardSection');
+            const advEl = document.getElementById('analyticsSection');
+            const rptEl = document.getElementById('reportsSection');
+            const navDash = document.getElementById('navDashboard');
+            const navAnaly = document.getElementById('navAnalytics');
+            const navRpt = document.getElementById('navReports');
+
+            const kpiGrid = document.querySelector('.kpi-grid');
+            const chartSec = document.querySelector('.analytics-section');
+            const mapCard = document.querySelector('.map-card');
+            const filterSec = document.querySelector('.filter-section');
+
+            // Hide everything first
+            [dashEl, advEl, rptEl].forEach(el => { if (el) el.style.display = 'none'; });
+            [navDash, navAnaly, navRpt].forEach(n => { if (n) n.classList.remove('active'); });
+            [kpiGrid, chartSec, mapCard, filterSec].forEach(el => { if (el) el.style.display = 'none'; });
+
+            if (section === 'analytics') {
+                if (advEl) advEl.style.display = '';
+                if (navAnaly) navAnaly.classList.add('active');
+                if (!analyticsLoaded) { loadAnalytics(); analyticsLoaded = true; }
+            } else if (section === 'reports') {
+                if (rptEl) rptEl.style.display = '';
+                if (navRpt) navRpt.classList.add('active');
+            } else {
+                // dashboard
+                if (dashEl) dashEl.style.display = '';
+                if (kpiGrid) kpiGrid.style.display = '';
+                if (chartSec) chartSec.style.display = '';
+                if (mapCard) mapCard.style.display = '';
+                if (filterSec) filterSec.style.display = '';
+                if (navDash) navDash.classList.add('active');
+            }
+        }
+
+        // ─── Analytics Loader ─────────────────────────────────────────
+        async function loadAnalytics() {
+            try {
+                document.getElementById('advTotal').textContent = '…';
+                document.getElementById('advRate').textContent = '…';
+                document.getElementById('advAvgDays').textContent = '…';
+                document.getElementById('advHighPriority').textContent = '…';
+
+                const [detailedRes, heatmapRes] = await Promise.all([
+                    fetch('/api/analytics/detailed/', { headers: { 'Authorization': `Token ${GO_AUTH_TOKEN}` } }),
+                    fetch('/api/analytics/heatmap/', { headers: { 'Authorization': `Token ${GO_AUTH_TOKEN}` } }),
+                ]);
+
+                if (!detailedRes.ok) throw new Error(`Detailed API error: ${detailedRes.status}`);
+                if (!heatmapRes.ok) throw new Error(`Heatmap API error: ${heatmapRes.status}`);
+
+                const detailed = await detailedRes.json();
+                const heatmapData = await heatmapRes.json();
+
+                renderAdvKPIs(detailed.key_metrics);
+                renderAdvTrendChart(detailed.complaint_trends);
+                renderAdvCategoryChart(detailed.category_distribution);
+                renderAdvStatusChart(detailed.status_distribution);
+                renderAdvDeptTable(detailed.department_performance);
+                renderAdvHeatmap(heatmapData);
+
+                const updatedAt = new Date(detailed.last_updated).toLocaleString();
+                document.getElementById('advLastUpdated').textContent = `Last updated: ${updatedAt}`;
+
+            } catch (err) {
+                console.error('Analytics load error:', err);
+                document.getElementById('advLastUpdated').textContent = '❌ Failed to load analytics. Please check your login.';
+            }
+        }
+
+        // ─── KPI Cards ────────────────────────────────────────────────
+        function renderAdvKPIs(m) {
+            document.getElementById('advTotal').textContent = m.total_complaints;
+            document.getElementById('advRate').textContent = m.resolution_rate + '%';
+            document.getElementById('advAvgDays').textContent = m.avg_resolution_days + 'd';
+            document.getElementById('advHighPriority').textContent = m.high_priority_count;
+        }
+
+        // ─── 30-Day Trend Line Chart ──────────────────────────────────
+        function renderAdvTrendChart(trends) {
+            if (advTrendChart) advTrendChart.destroy();
+            const labels = Object.keys(trends);
+            const values = Object.values(trends);
+            const ctx = document.getElementById('advTrendChart').getContext('2d');
+            advTrendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Complaints',
+                        data: values,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59,130,246,.1)',
+                        pointBackgroundColor: '#3b82f6',
+                        pointRadius: 3,
+                        tension: 0.4,
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(30,41,59,.85)', padding: 10 } },
+                    scales: {
+                        x: { ticks: { maxTicksLimit: 8, color: '#64748b', font: { size: 11 } }, grid: { display: false } },
+                        y: { beginAtZero: true, ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: '#e2e8f0' } }
+                    }
+                }
+            });
+        }
+
+        // ─── Category Doughnut ────────────────────────────────────────
+        function renderAdvCategoryChart(categories) {
+            if (advCategoryChart) advCategoryChart.destroy();
+            const COLORS = ['#f87171', '#a78bfa', '#38bdf8', '#facc15', '#d1d5db'];
+            const ctx = document.getElementById('advCategoryChart').getContext('2d');
+            advCategoryChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: categories.map(c => c.label),
+                    datasets: [{
+                        data: categories.map(c => c.value),
+                        backgroundColor: COLORS,
+                        borderColor: '#fff',
+                        borderWidth: 2,
+                        hoverOffset: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    cutout: '65%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { size: 12, weight: '600' }, usePointStyle: true, padding: 12 } },
+                        tooltip: { backgroundColor: 'rgba(30,41,59,.85)', padding: 10 }
+                    }
+                }
+            });
+        }
+
+        // ─── Status Bar Chart ─────────────────────────────────────────
+        function renderAdvStatusChart(statuses) {
+            if (advStatusChart) advStatusChart.destroy();
+            const STATUS_COLORS = { 'Pending': '#fbbf24', 'In Progress': '#3b82f6', 'Resolved': '#059669' };
+            const ctx = document.getElementById('advStatusChart').getContext('2d');
+            advStatusChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: statuses.map(s => s.label),
+                    datasets: [{
+                        data: statuses.map(s => s.value),
+                        backgroundColor: statuses.map(s => STATUS_COLORS[s.label] || '#94a3b8'),
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(30,41,59,.85)', padding: 10 } },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: '#e2e8f0' } },
+                        y: { ticks: { color: '#64748b', font: { size: 12, weight: '600' } }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // ─── Department Table ─────────────────────────────────────────
+        function renderAdvDeptTable(depts) {
+            const tbody = document.getElementById('advDeptBody');
+            if (!depts || depts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#64748b;padding:1.5rem">No department data available yet.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = depts.map(d => `
+            <tr>
+                <td><strong>${d.department}</strong></td>
+                <td>${d.total_complaints}</td>
+                <td>${d.resolved}</td>
+                <td>
+                    <span class="rate-bar" style="width:${d.resolved_percentage}px"></span>
+                    ${d.resolved_percentage}%
+                </td>
+                <td>${d.avg_resolution_days} d</td>
+            </tr>`).join('');
+        }
+
+        // ─── Heatmap ──────────────────────────────────────────────────
+        function renderAdvHeatmap(data) {
+            if (advHeatmapInstance) {
+                advHeatmapInstance.remove();
+                advHeatmapInstance = null;
+            }
+            const center = data.center || { lat: 20.5937, lng: 78.9629 };
+            advHeatmapInstance = L.map('advHeatmap').setView([center.lat, center.lng], 5);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(advHeatmapInstance);
+
+            const heatPoints = data.points.map(p => [p.lat, p.lng, p.intensity]);
+
+            if (heatPoints.length > 0 && typeof L.heatLayer === 'function') {
+                L.heatLayer(heatPoints, {
+                    radius: 25, blur: 15, maxZoom: 17, minOpacity: 0.3,
+                    gradient: { 0.2: '#3498db', 0.4: '#2ecc71', 0.6: '#f39c12', 0.8: '#e74c3c', 1.0: '#c0392b' }
+                }).addTo(advHeatmapInstance);
+            }
+
+            // Clickable circle markers
+            data.points.forEach(p => {
+                const color = p.intensity > 0.7 ? '#dc2626' : p.intensity > 0.4 ? '#f59e0b' : '#059669';
+                L.circleMarker([p.lat, p.lng], {
+                    radius: 5, fillColor: color, color: '#000',
+                    weight: 1, opacity: 1, fillOpacity: 0.8
+                }).bindPopup(`<strong>${p.title}</strong><br>Severity: ${(p.intensity * 100).toFixed(0)}%`)
+                    .addTo(advHeatmapInstance);
+            });
+
+            // Invalidate size so map renders correctly inside a hidden-then-shown div
+            setTimeout(() => advHeatmapInstance.invalidateSize(), 300);
+        }
+
+        // ─── DOMContentLoaded: boot up the dashboard ──────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // Gracefully attempt WebSocket – never let WS errors crash the page
+            try {
+                initWebSocket();
+            } catch (e) {
+                console.warn('WebSocket init skipped:', e);
+                const wsEl = document.getElementById('wsStatus');
+                if (wsEl) { wsEl.textContent = '⚫ Offline'; wsEl.style.color = '#94a3b8'; }
+            }
+
+            // Load complaint table + basic KPI cards
+            fetchAnalytics();
+            fetchAndRenderComplaints();
+
+            // Filter button
+            if (applyFilterBtn) applyFilterBtn.addEventListener('click', fetchAndRenderComplaints);
+
+            // Status update buttons (event delegation)
+            if (complaintsTableBody) {
+                complaintsTableBody.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('update-status-btn')) {
+                        const id = e.target.getAttribute('data-id');
+                        const status = e.target.getAttribute('data-status');
+                        updateComplaintStatus(id, status);
+                    }
+                });
+            }
+
+            // Logout
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    localStorage.removeItem('go_auth_token');
+                    localStorage.removeItem('auth_token');
+                    window.location.href = '/';
+                });
+            }
+        });
+
+    </script>
+
+    <!-- ── Mark as Duplicate Modal ──────────────────────────────────── -->
+    <div id="dupModal"
+        style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;align-items:center;justify-content:center;">
+        <div
+            style="background:#fff;border-radius:1rem;padding:2rem;width:92%;max-width:440px;box-shadow:0 20px 60px rgba(15,23,42,.2);">
+            <h3 style="margin-bottom:1rem;font-size:1.1rem;font-weight:700;color:#1e293b;">🔗 Mark as Duplicate</h3>
+            <p style="font-size:.9rem;color:#64748b;margin-bottom:1.25rem;">
+                Marking <strong id="dupComplaintTitle"></strong> as a duplicate.
+            </p>
+            <label style="font-size:.85rem;font-weight:600;color:#1e293b;display:block;margin-bottom:.5rem;">
+                Original complaint ID (the one that already exists):
+            </label>
+            <input id="dupOriginalId" type="number" min="1" placeholder="e.g. 12"
+                style="width:100%;padding:.65rem 1rem;border:1.5px solid #e2e8f0;border-radius:.5rem;font-size:1rem;margin-bottom:1.25rem;">
+            <div style="display:flex;gap:.75rem;">
+                <button onclick="submitMarkDuplicate()"
+                    style="flex:1;background:#0f766e;color:#fff;border:none;border-radius:.5rem;padding:.75rem;font-weight:700;cursor:pointer;">✅
+                    Confirm</button>
+                <button onclick="closeDupModal()"
+                    style="flex:1;background:#f1f5f9;color:#64748b;border:none;border-radius:.5rem;padding:.75rem;font-weight:600;cursor:pointer;">Cancel</button>
+            </div>
+            <p id="dupError" style="color:#dc2626;font-size:.82rem;margin-top:.75rem;display:none;"></p>
+        </div>
+    </div>
+
+    <script>
+        let _dupTargetId = null;
+
+        function openMarkDuplicateModal(complaintId, title) {
+            _dupTargetId = complaintId;
+            document.getElementById('dupComplaintTitle').textContent = `#${complaintId}: ${title}`;
+            document.getElementById('dupOriginalId').value = '';
+            document.getElementById('dupError').style.display = 'none';
+            const modal = document.getElementById('dupModal');
+            modal.style.display = 'flex';
+        }
+
+        function closeDupModal() {
+            document.getElementById('dupModal').style.display = 'none';
+        }
+
+        async function submitMarkDuplicate() {
+            const originalId = parseInt(document.getElementById('dupOriginalId').value);
+            const errEl = document.getElementById('dupError');
+
+            if (!originalId || originalId <= 0) {
+                errEl.textContent = 'Please enter a valid complaint ID.';
+                errEl.style.display = 'block';
+                return;
+            }
+            if (originalId === _dupTargetId) {
+                errEl.textContent = 'A complaint cannot be a duplicate of itself.';
+                errEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/complaints/mark-duplicate/', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${GO_AUTH_TOKEN}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        original_complaint_id: originalId,
+                        duplicate_complaint_id: _dupTargetId,
+                    }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    closeDupModal();
+                    showNotificationToast(`✅ ${data.status}`);
+                } else {
+                    errEl.textContent = data.error || 'Failed to mark duplicate.';
+                    errEl.style.display = 'block';
+                }
+            } catch (e) {
+                errEl.textContent = 'Network error. Please try again.';
+                errEl.style.display = 'block';
+            }
+        }
+
+        // Close on backdrop click
+        document.getElementById('dupModal').addEventListener('click', function (e) {
+            if (e.target === this) closeDupModal();
+        });
+
+        // ─── Report Download ───────────────────────────────────────────
+        async function downloadReport(period) {
+            const btn = document.getElementById(`btn-${period}`);
+            const statusEl = document.getElementById('rptStatus');
+            const labels = { weekly: 'Weekly', monthly: 'Monthly', quarterly: 'Quarterly', all: 'All-Time' };
+
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ Generating…'; }
+            statusEl.style.cssText = 'display:block;padding:.7rem 1.1rem;border-radius:.5rem;font-size:.86rem;font-weight:600;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;';
+            statusEl.textContent = `⏳ Generating ${labels[period]} report — please wait…`;
+
+            try {
+                const res = await fetch(`/api/reports/generate/?period=${period}`, {
+                    headers: { 'Authorization': `Token ${GO_AUTH_TOKEN}` },
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `Server error ${res.status}`);
+                }
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+                a.href = url;
+                a.download = `scfms_report_${period}_${today}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                statusEl.style.cssText = 'display:block;padding:.7rem 1.1rem;border-radius:.5rem;font-size:.86rem;font-weight:600;background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0;';
+                statusEl.textContent = `✅ ${labels[period]} report downloaded successfully!`;
+            } catch (err) {
+                statusEl.style.cssText = 'display:block;padding:.7rem 1.1rem;border-radius:.5rem;font-size:.86rem;font-weight:600;background:#fef2f2;color:#7f1d1d;border:1px solid #fecaca;';
+                statusEl.textContent = `❌ Failed: ${err.message}`;
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = '⬇️ Download PDF'; }
+            }
+        }
+
+    </script>
+
+<!-- ══════════════════════ CHAT WIDGET (GO) ══════════════════════ -->
+<style>
+    #chatBubble {
+        position:fixed;bottom:28px;right:28px;z-index:10000;
+        width:58px;height:58px;border-radius:50%;
+        background:linear-gradient(135deg,#1e40af,#06b6d4);
+        display:flex;align-items:center;justify-content:center;
+        font-size:1.5rem;cursor:pointer;
+        box-shadow:0 8px 30px rgba(30,64,175,.4);
+        border:none;transition:transform .2s,box-shadow .2s;
+        animation:chatPop .4s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes chatPop{from{transform:scale(0)}to{transform:scale(1)}}
+    #chatBubble:hover{transform:scale(1.1);box-shadow:0 12px 40px rgba(30,64,175,.5)}
+    #chatWindow{
+        position:fixed;bottom:100px;right:28px;z-index:10000;
+        width:360px;max-height:520px;
+        background:#fff;border-radius:1.25rem;
+        box-shadow:0 20px 60px rgba(15,23,42,.2);
+        display:none;flex-direction:column;overflow:hidden;
+    }
+    #chatHeader{
+        background:linear-gradient(135deg,#1e40af,#06b6d4);
+        padding:1rem 1.25rem;color:#fff;
+        display:flex;align-items:center;gap:.75rem;
+    }
+    #chatHeader .bot-avatar{font-size:1.6rem;line-height:1}
+    #chatHeader .bot-info h4{font-size:.95rem;font-weight:700;margin:0}
+    #chatHeader .bot-info p{font-size:.72rem;margin:0;opacity:.85}
+    #chatHeader .close-chat{margin-left:auto;background:none;border:none;
+        color:#fff;font-size:1.3rem;cursor:pointer;opacity:.8;line-height:1}
+    #chatHeader .close-chat:hover{opacity:1}
+    #chatMessages{
+        flex:1;overflow-y:auto;padding:.9rem 1rem;
+        display:flex;flex-direction:column;gap:.7rem;
+        max-height:340px;background:#f8fafc;
+    }
+    #chatMessages .chat-msg{max-width:82%;word-break:break-word;line-height:1.5}
+    #chatMessages .chat-msg.bot{align-self:flex-start;background:#fff;color:#1e293b;
+        border-radius:0 1rem 1rem 1rem;padding:.6rem .9rem;font-size:.85rem;
+        box-shadow:0 2px 8px rgba(15,23,42,.08);border:1px solid #e2e8f0}
+    #chatMessages .chat-msg.user{align-self:flex-end;
+        background:linear-gradient(135deg,#1e40af,#06b6d4);
+        color:#fff;border-radius:1rem 1rem 0 1rem;padding:.6rem .9rem;font-size:.85rem}
+    #chatMessages .typing-dot{display:inline-flex;gap:4px;padding:.6rem .9rem}
+    #chatMessages .typing-dot span{
+        width:7px;height:7px;border-radius:50%;background:#94a3b8;
+        animation:blink2 1.2s infinite}
+    #chatMessages .typing-dot span:nth-child(2){animation-delay:.2s}
+    #chatMessages .typing-dot span:nth-child(3){animation-delay:.4s}
+    @keyframes blink2{0%,80%,100%{transform:scale(1);opacity:.4}40%{transform:scale(1.3);opacity:1}}
+    #chatInputRow{
+        display:flex;padding:.7rem .8rem;gap:.5rem;
+        border-top:1px solid #e2e8f0;background:#fff}
+    #chatInput{
+        flex:1;border:1.5px solid #e2e8f0;border-radius:.75rem;
+        padding:.5rem .85rem;font-size:.87rem;outline:none;
+        transition:border-color .2s}
+    #chatInput:focus{border-color:#1e40af}
+    #chatSendBtn{
+        background:linear-gradient(135deg,#1e40af,#06b6d4);
+        color:#fff;border:none;border-radius:.75rem;
+        padding:.5rem .9rem;font-size:1rem;cursor:pointer;
+        transition:opacity .2s}
+    #chatSendBtn:hover{opacity:.88}
+    #chatSendBtn:disabled{opacity:.4;cursor:default}
+    .chat-welcome-go{font-size:.8rem;color:#94a3b8;text-align:center;padding:.5rem 0}
+</style>
+
+<button id="chatBubble" onclick="toggleGoChat()" title="Chat with AI Assistant">🤖</button>
+
+<div id="chatWindow">
+    <div id="chatHeader">
+        <div class="bot-avatar">🤖</div>
+        <div class="bot-info">
+            <h4>SCFMS Assistant</h4>
+            <p>Powered by Gemini AI • Ask anything</p>
+        </div>
+        <button class="close-chat" onclick="toggleGoChat()">✕</button>
+    </div>
+    <div id="chatMessages">
+        <div class="chat-welcome-go">Ask about complaint trends, categories, or department performance.</div>
+        <div class="chat-msg bot">👋 Hello! I'm your SCFMS AI Assistant. I can help you understand complaint data, answer policy questions, or assist with managing complaints. How can I help?</div>
+    </div>
+    <div id="chatInputRow">
+        <input id="chatInput" type="text" placeholder="Type a message…" maxlength="500"
+               onkeydown="if(event.key==='Enter')sendGoMessage()">
+        <button id="chatSendBtn" onclick="sendGoMessage()">➤</button>
+    </div>
+</div>
+
+<script>
+    const _goChatToken = localStorage.getItem('go_auth_token') || localStorage.getItem('auth_token');
+    let _goChatHistory = [];
+    let _goChatOpen = false;
+
+    function toggleGoChat() {
+        _goChatOpen = !_goChatOpen;
+        const win = document.getElementById('chatWindow');
+        win.style.display = _goChatOpen ? 'flex' : 'none';
+        if (_goChatOpen) document.getElementById('chatInput').focus();
+    }
+
+    function appendGoMsg(text, role) {
+        const msgs = document.getElementById('chatMessages');
+        const div  = document.createElement('div');
+        div.className = `chat-msg ${role}`;
+        div.textContent = text;
+        msgs.appendChild(div);
+        msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function showGoTyping() {
+        const msgs = document.getElementById('chatMessages');
+        const div  = document.createElement('div');
+        div.className = 'chat-msg bot typing-dot';
+        div.id = 'goTyping';
+        div.innerHTML = '<span></span><span></span><span></span>';
+        msgs.appendChild(div);
+        msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    async function sendGoMessage() {
+        const input = document.getElementById('chatInput');
+        const send  = document.getElementById('chatSendBtn');
+        const text  = input.value.trim();
+        if (!text) return;
+
+        input.value = '';
+        input.disabled = true;
+        send.disabled  = true;
+
+        appendGoMsg(text, 'user');
+        showGoTyping();
+
+        try {
+            const res = await fetch('/api/chatbot/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${_goChatToken}`,
+                },
+                body: JSON.stringify({ message: text, history: _goChatHistory }),
+            });
+            const data  = await res.json();
+            const reply = data.reply || 'Sorry, I could not get a response.';
+
+            _goChatHistory.push({ role: 'user',  parts: [text] });
+            _goChatHistory.push({ role: 'model', parts: [reply] });
+            if (_goChatHistory.length > 20) _goChatHistory = _goChatHistory.slice(-20);
+
+            const t = document.getElementById('goTyping');
+            if (t) t.remove();
+            appendGoMsg(reply, 'bot');
+        } catch (err) {
+            const t = document.getElementById('goTyping');
+            if (t) t.remove();
+            appendGoMsg('⚠️ Connection error. Please try again.', 'bot');
+        } finally {
+            input.disabled = false;
+            send.disabled  = false;
+            input.focus();
+        }
+    }
+</script>
+<!-- ═══════════════════ END CHAT WIDGET ═══════════════════ -->
+
+    {% endblock %}

@@ -1,0 +1,1393 @@
+{% extends "base.html" %}
+{% block title %}Citizen Dashboard | SCFMS{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Citizen Dashboard - SCFMS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0f766e;
+            --primary-light: #14b8a6;
+            --primary-dark: #0d5d56;
+            --secondary: #06b6d4;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --warning: #f97316;
+            --danger: #ef4444;
+            --bg-dark: #0f172a;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --bg-light: #f8fafc;
+            --border: #e2e8f0;
+            --card-bg: #ffffff;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f0f9ff 0%, #f5f3ff 50%, #f0fdf4 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+        }
+
+        /* Navbar */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            animation: slideInDown 0.5s ease-out;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            padding-bottom: 0.25rem;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .notification-btn {
+            position: relative;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            padding: 0.5rem;
+        }
+
+        .notification-btn:hover {
+            color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .profile-dropdown {
+            position: relative;
+        }
+
+        .profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .profile-btn:hover {
+            background: var(--bg-light);
+        }
+
+        .profile-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 40px rgba(15, 23, 42, 0.1);
+            min-width: 200px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
+        }
+
+        .profile-dropdown:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            padding: 0.75rem 1.25rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-light);
+            color: var(--primary);
+        }
+
+        .dropdown-item.logout {
+            color: var(--danger);
+            border-top: 1px solid var(--border);
+            margin-top: 0.5rem;
+            padding-top: 0.75rem;
+        }
+
+        .dropdown-item.logout:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Main Container */
+        main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            margin-bottom: 3rem;
+            animation: slideInDown 0.6s ease-out;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            animation: slideInUp 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+
+        .stat-card.pending::before {
+            background: linear-gradient(90deg, var(--warning) 0%, var(--accent) 100%);
+        }
+
+        .stat-card.resolved::before {
+            background: linear-gradient(90deg, var(--success) 0%, #34d399 100%);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.15);
+        }
+
+        .stat-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .stat-info {
+            flex: 1;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2.75rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-card.pending .stat-value {
+            color: var(--warning);
+        }
+
+        .stat-card.resolved .stat-value {
+            color: var(--success);
+        }
+
+        .stat-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(15, 102, 102, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .stat-card.pending .stat-icon {
+            background: linear-gradient(135deg, rgba(249, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
+            color: var(--warning);
+        }
+
+        .stat-card.resolved .stat-icon {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.1) 100%);
+            color: var(--success);
+        }
+
+        /* Action Button */
+        .action-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(15, 102, 102, 0.3);
+            animation: slideInUp 0.6s ease-out 0.1s both;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(15, 102, 102, 0.4);
+        }
+
+        .action-button:active {
+            transform: translateY(0);
+        }
+
+        .action-section {
+            margin-bottom: 3rem;
+        }
+
+        /* Complaints Table */
+        .table-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+            border: 1px solid var(--border);
+            animation: slideInUp 0.6s ease-out 0.2s both;
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .table-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: linear-gradient(90deg, var(--bg-light) 0%, #f5f3ff 100%);
+            border-bottom: 2px solid var(--border);
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 1.25rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: linear-gradient(90deg, rgba(15, 102, 102, 0.02) 0%, rgba(6, 182, 212, 0.02) 100%);
+        }
+
+        .complaint-title {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-pending {
+            background: rgba(249, 158, 11, 0.15);
+            color: var(--warning);
+        }
+
+        .status-progress {
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--secondary);
+        }
+
+        .status-resolved {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Footer */
+        footer {
+            background: white;
+            border-top: 1px solid var(--border);
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 4rem;
+        }
+
+        /* Animations */
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        @keyframes shimmer {
+
+            0%,
+            100% {
+                box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
+            }
+
+            50% {
+                box-shadow: 0 4px 20px rgba(15, 102, 102, 0.15);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-container {
+                padding: 0 1rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .nav-link {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-card {
+                padding: 1.5rem;
+            }
+
+            main {
+                padding: 2rem 1rem;
+            }
+
+            .table-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            td {
+                padding: 1rem 0.75rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span>📋 SCFMS</span>
+            </a>
+
+            <div class="nav-links">
+                <a href="/public/" class="nav-link">Dashboard</a>
+                <a href="/report/" class="nav-link">File Complaint</a>
+
+                <button class="notification-btn" title="Notifications">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <span class="notification-badge">3</span>
+                </button>
+
+                <div class="profile-dropdown">
+                    <button class="profile-btn">
+                        <div class="profile-avatar">👤</div>
+                        <span>Profile</span>
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    <div class="dropdown-menu">
+                        <a href="#" class="dropdown-item">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            My Profile
+                        </a>
+                        <button class="dropdown-item logout" id="logoutBtn">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1>Welcome Back! 👋</h1>
+            <p>Track, manage, and monitor your civic complaints in one place</p>
+        </section>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <div class="stat-label">📊 Total Complaints</div>
+                        <div class="stat-value" id="total-count">0</div>
+                        <div class="stat-desc">All your complaints</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card pending">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <div class="stat-label">⏳ Pending</div>
+                        <div class="stat-value" id="pending-count">0</div>
+                        <div class="stat-desc">Awaiting action</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card resolved">
+                <div class="stat-content">
+                    <div class="stat-info">
+                        <div class="stat-label">✅ Resolved</div>
+                        <div class="stat-value" id="resolved-count">0</div>
+                        <div class="stat-desc">Successfully closed</div>
+                    </div>
+                    <div class="stat-icon">
+                        <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Section -->
+        <section class="action-section">
+            <a href="/report/" class="action-button">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>File New Complaint</span>
+            </a>
+        </section>
+
+        <!-- Complaints Table -->
+        <section class="table-card">
+            <div class="table-header">
+                <h2>Your Complaints</h2>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Date Filed</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="complaint-list">
+                        <tr>
+                            <td colspan="4" class="empty-state">
+                                <div class="empty-state-icon">📭</div>
+                                <p>Loading your complaints...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2026 SCFMS - Smart Civic Facilities Management System. Empowering citizens through transparent governance.
+        </p>
+    </footer>
+
+    <script>
+        // ============================================================
+        //              🚨 WEBSOCKET REAL-TIME NOTIFICATIONS
+        // ============================================================
+
+        function initWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const token = localStorage.getItem('auth_token') || localStorage.getItem('citizen_auth_token');
+            const wsUrl = `${protocol}//${window.location.host}/ws/notifications/?token=${token}`;
+
+            const ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                console.log('✅ WebSocket connected for citizen!');
+                updateNotificationStatus('Connected');
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+
+                if (data.type === 'notification') {
+                    console.log('🔔 Received notification:', data.message);
+                    // Show notification toast
+                    showNotificationToast(data.message);
+                    // Reload complaints to show updated status
+                    loadComplaints();
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('❌ WebSocket error:', error);
+                updateNotificationStatus('Disconnected');
+            };
+
+            ws.onclose = () => {
+                console.log('❌ WebSocket closed, reconnecting in 3 seconds...');
+                updateNotificationStatus('Reconnecting...');
+                setTimeout(initWebSocket, 3000);
+            };
+        }
+
+        function showNotificationToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: #10b981;
+                color: white;
+                padding: 16px 20px;
+                border-radius: 8px;
+                z-index: 9999;
+                animation: slideUp 0.3s ease-in;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                max-width: 350px;
+                word-wrap: break-word;
+            `;
+            toast.innerText = message;
+
+            document.body.appendChild(toast);
+
+            // Remove after 5 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideDown 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        function updateNotificationStatus(status) {
+            // Optional: Update UI to show WebSocket status
+            console.log('WebSocket status:', status);
+        }
+
+        // Load complaints
+        async function loadComplaints() {
+            const token = localStorage.getItem("auth_token");
+            if (!token) {
+                window.location.href = '/login/';
+                return;
+            }
+
+            try {
+                const res = await fetch("/api/complaints/", {
+                    headers: { "Authorization": `Token ${token}` }
+                });
+
+                if (!res.ok) throw new Error('Failed to load complaints');
+
+                const complaints = await res.json();
+                let pending = 0, resolved = 0;
+                const tbody = document.getElementById("complaint-list");
+                tbody.innerHTML = "";
+
+                if (complaints.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="empty-state">
+                                <div class="empty-state-icon">📭</div>
+                                <p>No complaints yet. <a href="/report/" style="color: var(--primary); text-decoration: none; font-weight: 600;">File one now!</a></p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    complaints.forEach((c, idx) => {
+                        if (c.status === "P") pending++;
+                        if (c.status === "R") resolved++;
+
+                        let statusClass = 'status-pending';
+                        let statusText = 'Pending';
+
+                        if (c.status === "I") {
+                            statusClass = 'status-progress';
+                            statusText = 'In Progress';
+                        } else if (c.status === "R") {
+                            statusClass = 'status-resolved';
+                            statusText = 'Resolved';
+                        }
+
+                        tbody.innerHTML += `
+                            <tr style="animation: slideInUp 0.4s ease-out ${idx * 0.05}s both;">
+                                <td class="complaint-title">${c.title || 'N/A'}</td>
+                                <td>${c.category || 'General'}</td>
+                                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                                <td>${new Date(c.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                                <td>
+                                    <button onclick="openTimeline(${c.id}, '${(c.title || '').replace(/'/g, "\\'")}')"
+                                        style="background:linear-gradient(135deg,#6366f1,#06b6d4);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
+                                        📋 Timeline
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                document.getElementById("total-count").textContent = complaints.length;
+                document.getElementById("pending-count").textContent = pending;
+                document.getElementById("resolved-count").textContent = resolved;
+            } catch (error) {
+                console.error('Error loading complaints:', error);
+                document.getElementById("complaint-list").innerHTML = `
+                    <tr>
+                        <td colspan="4" class="empty-state">
+                            <div class="empty-state-icon">⚠️</div>
+                            <p>Unable to load complaints. Please try refreshing the page.</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', function () {
+            localStorage.removeItem('auth_token');
+            window.location.href = '/login/';
+        });
+
+        // Initialize WebSocket on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            initWebSocket();
+            loadComplaints();
+        });
+
+        // Also add some CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideUp {
+                from {
+                    transform: translateY(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideDown {
+                from {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateY(400px);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+
+    <!-- ══════════════════════════ TIMELINE MODAL ══════════════════════════ -->
+    <style>
+        #timelineModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, .6);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .tl-card {
+            background: #fff;
+            border-radius: 1.25rem;
+            padding: 2rem;
+            width: 100%;
+            max-width: 520px;
+            max-height: 88vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 80px rgba(15, 23, 42, .22);
+            animation: tlSlideIn .3s ease-out;
+        }
+
+        @keyframes tlSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tl-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .tl-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .tl-subtitle {
+            font-size: .82rem;
+            color: #64748b;
+            margin-top: .25rem;
+        }
+
+        .tl-close {
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            cursor: pointer;
+            color: #94a3b8;
+            line-height: 1;
+            padding: 0;
+        }
+
+        .tl-close:hover {
+            color: #475569;
+        }
+
+        .dup-banner {
+            background: #fef9c3;
+            border: 1px solid #fde047;
+            border-radius: .6rem;
+            padding: .65rem 1rem;
+            font-size: .82rem;
+            color: #78350f;
+            margin-bottom: 1.25rem;
+        }
+
+        /* Vertical timeline */
+        .tl-steps {
+            position: relative;
+            padding-left: 36px;
+        }
+
+        .tl-steps::before {
+            content: '';
+            position: absolute;
+            left: 14px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #6366f1, #06b6d4, #10b981);
+            border-radius: 2px;
+        }
+
+        .tl-step {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .tl-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .tl-dot {
+            position: absolute;
+            left: -29px;
+            top: 4px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .75rem;
+            border: 2.5px solid #fff;
+            box-shadow: 0 0 0 2px var(--dot-color, #6366f1);
+            background: var(--dot-color, #6366f1);
+            color: #fff;
+        }
+
+        .tl-step-title {
+            font-size: .92rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: .2rem;
+        }
+
+        .tl-step-desc {
+            font-size: .82rem;
+            color: #64748b;
+            margin-bottom: .3rem;
+        }
+
+        .tl-step-meta {
+            font-size: .75rem;
+            color: #94a3b8;
+        }
+
+        .tl-step.current .tl-step-title {
+            color: #0f766e;
+        }
+
+        .tl-loading {
+            text-align: center;
+            padding: 2rem;
+            color: #94a3b8;
+        }
+
+        .tl-empty {
+            text-align: center;
+            padding: 2rem 0;
+            color: #94a3b8;
+            font-size: .9rem;
+        }
+    </style>
+
+    <div id="timelineModal">
+        <div class="tl-card">
+            <div class="tl-header">
+                <div>
+                    <div class="tl-title" id="tlTitle">Complaint Journey</div>
+                    <div class="tl-subtitle" id="tlSubtitle"></div>
+                </div>
+                <button class="tl-close" onclick="closeTimeline()">&times;</button>
+            </div>
+            <div id="tlDupBanner" class="dup-banner" style="display:none;"></div>
+            <div id="tlSteps">
+                <div class="tl-loading">⏳ Loading timeline…</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openTimeline(id, title) {
+            document.getElementById('tlTitle').textContent = `📋 ${title}`;
+            document.getElementById('tlSubtitle').textContent = `Complaint #${id} · Full Journey`;
+            document.getElementById('tlDupBanner').style.display = 'none';
+            document.getElementById('tlSteps').innerHTML = '<div class="tl-loading">⏳ Loading timeline…</div>';
+            document.getElementById('timelineModal').style.display = 'flex';
+            fetchTimeline(id);
+        }
+
+        function closeTimeline() {
+            document.getElementById('timelineModal').style.display = 'none';
+        }
+
+        async function fetchTimeline(id) {
+            const token = localStorage.getItem('auth_token');
+            try {
+                const res = await fetch(`/api/complaints/${id}/timeline/`, {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                if (!res.ok) throw new Error('Failed');
+                const data = await res.json();
+                renderTimeline(data);
+            } catch (e) {
+                document.getElementById('tlSteps').innerHTML =
+                    '<div class="tl-empty">❌ Could not load timeline. Please try again.</div>';
+            }
+        }
+
+        function renderTimeline(data) {
+            // Duplicate banner
+            if (data.is_duplicate && data.original_id) {
+                const b = document.getElementById('tlDupBanner');
+                b.innerHTML = `⚠️ This complaint was marked as a <strong>duplicate</strong> of complaint <strong>#${data.original_id}</strong>. Both are being tracked together.`;
+                b.style.display = 'block';
+            }
+
+            if (!data.timeline || data.timeline.length === 0) {
+                document.getElementById('tlSteps').innerHTML = '<div class="tl-empty">No timeline events yet.</div>';
+                return;
+            }
+
+            const stepsHTML = data.timeline.map(ev => {
+                const date = new Date(ev.timestamp);
+                const formatted = date.toLocaleString('en-IN', {
+                    day: '2-digit', month: 'short', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                });
+                return `
+                <div class="tl-step ${ev.is_current ? 'current' : ''}">
+                    <div class="tl-dot" style="--dot-color:${ev.color}">${ev.icon}</div>
+                    <div class="tl-step-title">${ev.title}</div>
+                    <div class="tl-step-desc">${ev.description}</div>
+                    <div class="tl-step-meta">🕐 ${formatted} &nbsp;·&nbsp; 👤 ${ev.actor}</div>
+                </div>`;
+            }).join('');
+
+            document.getElementById('tlSteps').innerHTML = `<div class="tl-steps">${stepsHTML}</div>`;
+        }
+
+        // Close on backdrop click
+        document.getElementById('timelineModal').addEventListener('click', function (e) {
+            if (e.target === this) closeTimeline();
+        });
+    </script>
+
+<!-- ══════════════════════ CHAT WIDGET ══════════════════════ -->
+<style>
+    #chatBubble {
+        position: fixed; bottom: 28px; right: 28px; z-index: 10000;
+        width: 58px; height: 58px; border-radius: 50%;
+        background: linear-gradient(135deg, #0f766e, #06b6d4);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; cursor: pointer;
+        box-shadow: 0 8px 30px rgba(15,118,110,.45);
+        border: none; transition: transform .2s, box-shadow .2s;
+        animation: chatPop .4s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes chatPop { from { transform: scale(0); } to { transform: scale(1); } }
+    #chatBubble:hover { transform: scale(1.1); box-shadow: 0 12px 40px rgba(15,118,110,.55); }
+
+    #chatWindow {
+        position: fixed; bottom: 100px; right: 28px; z-index: 10000;
+        width: 360px; max-height: 520px;
+        background: #fff; border-radius: 1.25rem;
+        box-shadow: 0 20px 60px rgba(15,23,42,.2);
+        display: none; flex-direction: column; overflow: hidden;
+        animation: chatSlide .3s ease-out;
+    }
+    @keyframes chatSlide { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+    #chatHeader {
+        background: linear-gradient(135deg, #0f766e, #06b6d4);
+        padding: 1rem 1.25rem; color: #fff;
+        display: flex; align-items: center; gap: .75rem;
+    }
+    #chatHeader .bot-avatar { font-size: 1.6rem; line-height:1; }
+    #chatHeader .bot-info h4 { font-size: .95rem; font-weight: 700; margin: 0; }
+    #chatHeader .bot-info p  { font-size: .72rem; margin: 0; opacity: .85; }
+    #chatHeader .close-chat  { margin-left: auto; background: none; border: none;
+        color: #fff; font-size: 1.3rem; cursor: pointer; opacity: .8; line-height:1; }
+    #chatHeader .close-chat:hover { opacity: 1; }
+
+    #chatMessages {
+        flex: 1; overflow-y: auto; padding: .9rem 1rem;
+        display: flex; flex-direction: column; gap: .7rem;
+        max-height: 340px;
+        background: #f8fafc;
+    }
+    .chat-msg { max-width: 82%; word-break: break-word; line-height: 1.5; }
+    .chat-msg.bot { align-self: flex-start;
+        background: #fff; color: #1e293b;
+        border-radius: 0 1rem 1rem 1rem;
+        padding: .6rem .9rem; font-size: .85rem;
+        box-shadow: 0 2px 8px rgba(15,23,42,.08);
+        border: 1px solid #e2e8f0;
+    }
+    .chat-msg.user { align-self: flex-end;
+        background: linear-gradient(135deg, #0f766e, #06b6d4);
+        color: #fff; border-radius: 1rem 1rem 0 1rem;
+        padding: .6rem .9rem; font-size: .85rem;
+    }
+    .typing-dot { display: inline-flex; gap: 4px; padding: .6rem .9rem; }
+    .typing-dot span {
+        width: 7px; height: 7px; border-radius: 50%; background: #94a3b8;
+        animation: blink 1.2s infinite;
+    }
+    .typing-dot span:nth-child(2) { animation-delay: .2s; }
+    .typing-dot span:nth-child(3) { animation-delay: .4s; }
+    @keyframes blink { 0%,80%,100%{transform:scale(1);opacity:.4} 40%{transform:scale(1.3);opacity:1} }
+
+    #chatInputRow {
+        display: flex; padding: .7rem .8rem; gap: .5rem;
+        border-top: 1px solid #e2e8f0; background: #fff;
+    }
+    #chatInput {
+        flex: 1; border: 1.5px solid #e2e8f0; border-radius: .75rem;
+        padding: .5rem .85rem; font-size: .87rem; outline: none;
+        transition: border-color .2s;
+    }
+    #chatInput:focus { border-color: #0f766e; }
+    #chatSend {
+        background: linear-gradient(135deg, #0f766e, #06b6d4);
+        color: #fff; border: none; border-radius: .75rem;
+        padding: .5rem .9rem; font-size: 1rem; cursor: pointer;
+        transition: opacity .2s;
+    }
+    #chatSend:hover { opacity: .88; }
+    #chatSend:disabled { opacity: .4; cursor:default; }
+
+    .chat-welcome { font-size:.8rem; color:#94a3b8; text-align:center; padding:.5rem 0; }
+</style>
+
+<!-- Floating bubble -->
+<button id="chatBubble" onclick="toggleChat()" title="Chat with Civic Assistant">💬</button>
+
+<!-- Chat window -->
+<div id="chatWindow">
+    <div id="chatHeader">
+        <div class="bot-avatar">🤖</div>
+        <div class="bot-info">
+            <h4>Civic Assistant</h4>
+            <p>Powered by Gemini AI • Ask anything</p>
+        </div>
+        <button class="close-chat" onclick="toggleChat()">✕</button>
+    </div>
+    <div id="chatMessages">
+        <div class="chat-welcome">Ask about your complaints, categories, or how to file a new one.</div>
+        <div class="chat-msg bot">👋 Hello! I'm your Civic Assistant. I can help you understand your complaints, guide you through the submission process, or answer questions about how the system works. How can I help?</div>
+    </div>
+    <div id="chatInputRow">
+        <input id="chatInput" type="text" placeholder="Type a message…" maxlength="500"
+               onkeydown="if(event.key==='Enter')sendChatMessage()">
+        <button id="chatSend" onclick="sendChatMessage()">➤</button>
+    </div>
+</div>
+
+<script>
+    const _chatToken = localStorage.getItem('auth_token');
+    let _chatHistory = [];
+    let _chatOpen = false;
+
+    function toggleChat() {
+        _chatOpen = !_chatOpen;
+        const win = document.getElementById('chatWindow');
+        win.style.display = _chatOpen ? 'flex' : 'none';
+        if (_chatOpen) document.getElementById('chatInput').focus();
+    }
+
+    function appendMsg(text, role) {
+        const msgs = document.getElementById('chatMessages');
+        const div = document.createElement('div');
+        div.className = `chat-msg ${role}`;
+        div.textContent = text;
+        msgs.appendChild(div);
+        msgs.scrollTop = msgs.scrollHeight;
+        return div;
+    }
+
+    function showTyping() {
+        const msgs = document.getElementById('chatMessages');
+        const div = document.createElement('div');
+        div.className = 'chat-msg bot typing-dot';
+        div.id = 'typingIndicator';
+        div.innerHTML = '<span></span><span></span><span></span>';
+        msgs.appendChild(div);
+        msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function removeTyping() {
+        const t = document.getElementById('typingIndicator');
+        if (t) t.remove();
+    }
+
+    async function sendChatMessage() {
+        const input = document.getElementById('chatInput');
+        const send  = document.getElementById('chatSend');
+        const text  = input.value.trim();
+        if (!text) return;
+
+        input.value = '';
+        input.disabled = true;
+        send.disabled  = true;
+
+        appendMsg(text, 'user');
+        showTyping();
+
+        try {
+            const res = await fetch('/api/chatbot/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${_chatToken}`,
+                },
+                body: JSON.stringify({ message: text, history: _chatHistory }),
+            });
+            const data = await res.json();
+            const reply = data.reply || 'Sorry, I could not get a response.';
+
+            // Update history for multi-turn context
+            _chatHistory.push({ role: 'user',  parts: [text] });
+            _chatHistory.push({ role: 'model', parts: [reply] });
+            // Keep last 10 turns (20 entries) to avoid token overflow
+            if (_chatHistory.length > 20) _chatHistory = _chatHistory.slice(-20);
+
+            removeTyping();
+            appendMsg(reply, 'bot');
+        } catch (err) {
+            removeTyping();
+            appendMsg('⚠️ Connection error. Please try again.', 'bot');
+        } finally {
+            input.disabled = false;
+            send.disabled  = false;
+            input.focus();
+        }
+    }
+</script>
+<!-- ═══════════════════ END CHAT WIDGET ═══════════════════ -->
+
+</body>
+
+</html>
+
+{% endblock %}
+
+<!-- ═══════════════════ CIVIC ASSISTANT CHAT WIDGET ═══════════════════ -->
+<!-- Appended outside {% block content %} so it floats above all other content -->

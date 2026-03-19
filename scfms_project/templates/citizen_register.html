@@ -1,0 +1,712 @@
+{% extends "base.html" %}
+{% block title %}Report a Complaint{% endblock %}
+{% block content %}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    :root {
+        --primary: #0f766e;
+        --primary-light: #14b8a6;
+        --primary-dark: #0d5d56;
+        --secondary: #06b6d4;
+        --success: #10b981;
+        --warning: #f97316;
+        --danger: #ef4444;
+        --bg-light: #f8fafc;
+        --border: #e2e8f0;
+    }
+
+    body {
+        background: linear-gradient(135deg, #faf5f0 0%, #f5f0fa 50%, #f0f5fa 100%);
+        background-attachment: fixed;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    /* Header */
+    .header {
+        margin-bottom: 2.5rem;
+        animation: slideInDown 0.6s ease-out;
+        text-align: center;
+    }
+
+    .header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .header p {
+        font-size: 1rem;
+        color: #64748b;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    /* Form Container */
+    .form-card {
+        background: white;
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        box-shadow: 0 8px 32px rgba(15, 23, 42, 0.06);
+        border: 1px solid rgba(15, 23, 42, 0.05);
+        animation: slideInUp 0.6s ease-out;
+    }
+
+    /* Form Section */
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .form-section:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+
+    .section-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Form Group */
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-group:last-child {
+        margin-bottom: 0;
+    }
+
+    label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="file"],
+    textarea,
+    select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1.5px solid var(--border);
+        border-radius: 0.625rem;
+        font-size: 0.95rem;
+        font-family: inherit;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="file"]:focus,
+    textarea:focus,
+    select:focus {
+        outline: none;
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 3px rgba(15, 102, 102, 0.08);
+        background: rgba(15, 102, 102, 0.02);
+    }
+
+    textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    input[readonly] {
+        background: linear-gradient(135deg, rgba(15, 102, 102, 0.03) 0%, rgba(6, 182, 212, 0.03) 100%);
+        color: var(--primary);
+        font-weight: 500;
+        cursor: not-allowed;
+    }
+
+    /* Grid */
+    .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 0.875rem 1.5rem;
+        border: none;
+        border-radius: 0.625rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .btn:active {
+        transform: translateY(0);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: white;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, var(--success) 0%, #34d399 100%);
+        color: white;
+        font-size: 1rem;
+        padding: 1rem 1.5rem;
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, var(--warning) 0%, #fb923c 100%);
+        color: white;
+    }
+
+    /* Map */
+    #map {
+        border-radius: 0.625rem;
+        border: 1.5px solid var(--border);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+    }
+
+    #map:hover {
+        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+    }
+
+    /* Analysis Results */
+    #aiStatus {
+        margin-top: 1rem;
+        padding: 1rem;
+        border-radius: 0.625rem;
+        border-left: 4px solid var(--primary);
+        background: linear-gradient(135deg, rgba(15, 102, 102, 0.04) 0%, rgba(6, 182, 212, 0.04) 100%);
+        font-size: 0.95rem;
+        font-weight: 600;
+        animation: slideInUp 0.4s ease-out;
+    }
+
+    #aiStatus.text-blue-600 {
+        border-left-color: var(--secondary);
+        color: var(--secondary);
+    }
+
+    #aiStatus.text-green-700 {
+        border-left-color: var(--success);
+        color: var(--success);
+    }
+
+    #aiStatus.text-red-600 {
+        border-left-color: var(--danger);
+        color: var(--danger);
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.04) 0%, rgba(248, 113, 113, 0.04) 100%);
+    }
+
+    /* Analysis Details Panel */
+    .analysis-panel {
+        display: none;
+        margin-top: 1.5rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(15, 102, 102, 0.06) 0%, rgba(6, 182, 212, 0.06) 100%);
+        border-radius: 0.75rem;
+        border: 1.5px solid var(--primary-light);
+        animation: slideInUp 0.5s ease-out;
+    }
+
+    .analysis-panel.active {
+        display: block;
+    }
+
+    .analysis-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .analysis-item {
+        background: white;
+        padding: 1.25rem;
+        border-radius: 0.625rem;
+        border: 1.5px solid var(--border);
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .analysis-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+        border-color: var(--primary-light);
+    }
+
+    .analysis-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+
+    .analysis-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+        line-height: 1.2;
+    }
+
+    .severity-high {
+        color: var(--danger);
+    }
+
+    .severity-medium {
+        color: var(--warning);
+    }
+
+    .severity-low {
+        color: var(--success);
+    }
+
+    /* Response Message */
+    #response-message {
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        animation: slideInUp 0.4s ease-out;
+    }
+
+    .response-success {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.1) 100%);
+        border: 2px solid var(--success);
+        color: var(--success);
+    }
+
+    .response-error {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(248, 113, 113, 0.1) 100%);
+        border: 2px solid var(--danger);
+        color: var(--danger);
+    }
+
+    /* Animations */
+    @keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container {
+            padding: 1rem;
+        }
+
+        .form-card {
+            padding: 1.5rem;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+        }
+
+        .header p {
+            font-size: 0.9rem;
+        }
+
+        .section-title {
+            font-size: 0.95rem;
+        }
+
+        #map {
+            height: 250px !important;
+        }
+
+        .analysis-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .grid-2 {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .header h1 {
+            font-size: 1.5rem;
+        }
+
+        .form-card {
+            padding: 1.25rem;
+            border-radius: 1rem;
+        }
+
+        #map {
+            height: 220px !important;
+        }
+    }
+</style>
+
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>📢 Report a Civic Complaint</h1>
+        <p>Upload a photo, AI analyzes it, auto-fill details, and submit instantly</p>
+    </div>
+
+    <!-- Form -->
+    <div class="form-card">
+        <form id="complaintForm" enctype="multipart/form-data">
+
+            <!-- Section 1: Image Upload & AI -->
+            <div class="form-section">
+                <div class="section-title">🖼️ Image & AI Analysis</div>
+
+                <div class="form-group">
+                    <label>Upload or Capture Image</label>
+                    <input type="file" name="image" id="image" accept="image/*" capture="environment" required>
+                </div>
+
+                <button type="button" id="aiAnalyzeBtn" class="btn btn-secondary">
+                    🤖 Run AI Analysis
+                </button>
+
+                <div id="aiStatus" class="text-sm font-medium hidden"></div>
+
+                <!-- Analysis Results Panel -->
+                <div id="analysisPanelContainer" class="analysis-panel">
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem;">✨ AI
+                        Analysis Results</h3>
+                    <div class="analysis-grid">
+                        <div class="analysis-item">
+                            <div class="analysis-label">📂 Department</div>
+                            <div class="analysis-value" id="department-display">-</div>
+                        </div>
+                        <div class="analysis-item">
+                            <div class="analysis-label">⚠️ Severity Score</div>
+                            <div class="analysis-value" id="severity-display" style="font-size: 2.5rem;">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Location -->
+            <div class="form-section">
+                <div class="section-title">📍 Location Details</div>
+
+                <div class="form-group">
+                    <button type="button" id="getLocationBtn" class="btn btn-primary">
+                        📍 Detect GPS Location
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label>Detected Location Address</label>
+                    <input type="text" id="locality_name" readonly>
+                </div>
+
+                <div class="form-group">
+                    <div id="map" style="height: 250px;"></div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Latitude</label>
+                        <input type="text" name="latitude" id="latitude" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Longitude</label>
+                        <input type="text" name="longitude" id="longitude" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Complaint Details -->
+            <div class="form-section">
+                <div class="section-title">📝 Complaint Details</div>
+
+                <div class="form-group">
+                    <label>Complaint Title</label>
+                    <input type="text" name="title" id="title" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" id="description" required></textarea>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-success" style="font-size: 1.1rem; padding: 1.25rem;">
+                ✅ Submit Complaint
+            </button>
+
+            <div id="response-message" class="hidden"></div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const OPENCAGE_API_KEY = "54e00dd223cd40b5a6f1fc8484a3091e";
+    let map, marker;
+
+    function initMap(lat = 20.5937, lon = 78.9629) {
+        map = L.map("map").setView([lat, lon], 5);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19
+        }).addTo(map);
+        marker = L.marker([lat, lon]).addTo(map);
+    }
+
+    async function reverseGeocode(lat, lon) {
+        const url = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${OPENCAGE_API_KEY}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.results?.length) {
+            document.getElementById("locality_name").value = data.results[0].formatted || "Unknown location";
+        }
+    }
+
+    document.getElementById("getLocationBtn").addEventListener("click", () => {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                let lat = pos.coords.latitude;
+                let lon = pos.coords.longitude;
+                document.getElementById("latitude").value = lat.toFixed(6);
+                document.getElementById("longitude").value = lon.toFixed(6);
+                reverseGeocode(lat, lon);
+                map.setView([lat, lon], 16);
+                marker.setLatLng([lat, lon]);
+            },
+            () => alert("Location permission denied."),
+            { enableHighAccuracy: true }
+        );
+    });
+
+    document.getElementById("aiAnalyzeBtn").addEventListener("click", async () => {
+        const image = document.getElementById("image").files[0];
+        const aiStatus = document.getElementById("aiStatus");
+        const panel = document.getElementById("analysisPanelContainer");
+
+        if (!image) {
+            alert("Please upload an image first.");
+            return;
+        }
+
+        aiStatus.classList.remove("hidden");
+        aiStatus.textContent = "🔍 AI analyzing…";
+        aiStatus.classList.remove("text-red-600", "text-green-700");
+        aiStatus.classList.add("text-blue-600");
+        panel.classList.remove("active");
+
+        let fd = new FormData();
+        fd.append("image", image);
+
+        try {
+            const res = await fetch("/api/ai/analyze/", { method: "POST", body: fd });
+            const data = await res.json();
+
+            if (res.ok) {
+                document.getElementById("title").value = data.title;
+                document.getElementById("description").value = data.description;
+                document.getElementById("department-display").textContent = data.department || "General";
+
+                // Determine severity class
+                const severity = parseFloat(data.severity_score) || 0;
+                const severityEl = document.getElementById("severity-display");
+                severityEl.textContent = data.severity_score + "%";
+
+                if (severity > 70) {
+                    severityEl.classList.add("severity-high");
+                    severityEl.classList.remove("severity-medium", "severity-low");
+                } else if (severity > 40) {
+                    severityEl.classList.add("severity-medium");
+                    severityEl.classList.remove("severity-high", "severity-low");
+                } else {
+                    severityEl.classList.add("severity-low");
+                    severityEl.classList.remove("severity-high", "severity-medium");
+                }
+
+                panel.classList.add("active");
+                aiStatus.textContent = `✅ Analysis Complete!`;
+                aiStatus.classList.remove("text-blue-600");
+                aiStatus.classList.add("text-green-700");
+            } else {
+                aiStatus.textContent = "❌ AI failed to analyze.";
+                aiStatus.classList.remove("text-blue-600");
+                aiStatus.classList.add("text-red-600");
+            }
+        } catch (e) {
+            aiStatus.textContent = "❌ Network error.";
+            aiStatus.classList.remove("text-blue-600");
+            aiStatus.classList.add("text-red-600");
+        }
+    });
+
+    document.getElementById("complaintForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        await checkDuplicatesThenSubmit();
+    });
+
+    // ── Step 1: Check for duplicates ──────────────────────────────────
+    async function checkDuplicatesThenSubmit() {
+        const title = (document.getElementById("title").value || "").trim();
+        const description = (document.getElementById("description").value || "").trim();
+
+        if (!title && !description) {
+            // Nothing to check — proceed directly
+            await submitComplaint();
+            return;
+        }
+
+        const queryText = `${title} ${description}`;
+
+        try {
+            const res = await fetch(`/api/complaints/similar/?text=${encodeURIComponent(queryText)}`);
+            const data = await res.json();
+
+            if (data.count > 0) {
+                // Build a readable list of similar complaints
+                const listHTML = data.similar_complaints.map(c => `
+                <div style="text-align:left;background:#f8fafc;border-radius:8px;padding:10px 14px;margin:8px 0;border-left:4px solid #f59e0b">
+                    <strong>#${c.id}: ${c.title}</strong><br>
+                    <span style="font-size:0.85rem;color:#64748b">
+                        ${c.status} &bull; ${c.category} &bull;
+                        <strong style="color:#f59e0b">${c.similarity_percentage}% match</strong>
+                    </span>
+                </div>`).join('');
+
+                // Show SweetAlert2 warning (lib already loaded via base.html or will fallback to confirm())
+                if (window.Swal) {
+                    const result = await Swal.fire({
+                        icon: 'warning',
+                        title: '⚠️ Similar Complaints Found',
+                        html: `
+                        <p style="margin-bottom:12px;color:#475569">
+                            We found <strong>${data.count}</strong> similar complaint(s) already in the system:
+                        </p>
+                        ${listHTML}
+                        <p style="margin-top:14px;color:#64748b;font-size:0.9rem">
+                            Are you sure this is a new issue?
+                        </p>`,
+                        showCancelButton: true,
+                        confirmButtonText: '✅ Yes, Submit Anyway',
+                        cancelButtonText: '🔍 Review Existing',
+                        confirmButtonColor: '#0f766e',
+                        cancelButtonColor: '#94a3b8',
+                        width: 540,
+                    });
+                    if (!result.isConfirmed) return;  // Citizen chose to review
+                } else {
+                    // Fallback if Swal not loaded
+                    const proceed = confirm(
+                        `⚠️ ${data.count} similar complaint(s) found.\n` +
+                        data.similar_complaints.map(c => `  • #${c.id}: ${c.title} (${c.similarity_percentage}% match)`).join('\n') +
+                        '\n\nSubmit anyway?'
+                    );
+                    if (!proceed) return;
+                }
+            }
+        } catch (err) {
+            // If the API fails, proceed silently — never block the citizen
+            console.warn('Duplicate check failed (non-blocking):', err);
+        }
+
+        await submitComplaint();
+    }
+
+    // ── Step 2: Actual complaint submission ───────────────────────────
+    async function submitComplaint() {
+        const token = localStorage.getItem("auth_token");
+        if (!token) {
+            window.location.href = "/login/";
+            return;
+        }
+
+        const fd = new FormData(document.getElementById("complaintForm"));
+        const responseMsg = document.getElementById("response-message");
+
+        try {
+            const res = await fetch("/api/complaints/", {
+                method: "POST",
+                headers: { "Authorization": `Token ${token}` },
+                body: fd
+            });
+
+            if (res.ok) {
+                responseMsg.className = "response-success";
+                responseMsg.textContent = "✅ Complaint submitted successfully!";
+                responseMsg.classList.remove("hidden");
+                setTimeout(() => { window.location.href = "/public/"; }, 2000);
+            } else {
+                const error = await res.json();
+                responseMsg.className = "response-error";
+                responseMsg.textContent = "❌ " + (error.detail || "Failed to submit complaint.");
+                responseMsg.classList.remove("hidden");
+            }
+        } catch (err) {
+            responseMsg.className = "response-error";
+            responseMsg.textContent = "❌ Network error. Please try again.";
+            responseMsg.classList.remove("hidden");
+        }
+    }
+
+    initMap();
+
+</script>
+
+{% endblock %}

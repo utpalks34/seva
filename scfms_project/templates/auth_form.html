@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% block title %}Digital Governance | SCFMS{% endblock %}
+{% block nav_links %}{% endblock %}
+
+{% block content %}
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="min-h-screen flex items-center justify-center bg-gray-100 py-10">
+  <div class="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl">
+
+    <!-- Dynamic Heading -->
+    {% if form_type == "pc_login" %}
+      <h2 class="text-3xl font-bold mb-6 text-center text-blue-700">Citizen Login</h2>
+
+    {% elif form_type == "pc_register" %}
+      <h2 class="text-3xl font-bold mb-6 text-center text-green-i">Citizen Registration</h2>
+
+    {% elif form_type == "go_login" %}
+      <h2 class="text-3xl font-bold mb-6 text-center text-blue-700">Government Login</h2>
+
+    {% elif form_type == "go_register" %}
+      <h2 class="text-3xl font-bold mb-6 text-center text-green-i">Government Registration</h2>
+    {% endif %}
+
+    <!-- FORM -->
+    <form id="authForm" class="space-y-5">
+      {% csrf_token %}
+
+      <!-- Citizen Registration -->
+      {% if form_type == "pc_register" %}
+      <div>
+        <label class="block mb-1 font-semibold text-gray-600">Full Name</label>
+        <input type="text" id="name" class="w-full border rounded-lg p-3" required>
+      </div>
+      {% endif %}
+
+      <!-- Government Registration -->
+      {% if form_type == "go_register" %}
+      <div>
+        <label class="block mb-1 font-semibold text-gray-600">Full Name</label>
+        <input type="text" id="name" class="w-full border rounded-lg p-3" required>
+      </div>
+
+      <div>
+        <label class="block mb-1 font-semibold text-gray-600">Email</label>
+        <input type="email" id="email" class="w-full border rounded-lg p-3" required>
+      </div>
+      {% endif %}
+
+      <!-- Government ID & Email (for login & register) -->
+      {% if form_type == "go_login" or form_type == "go_register" %}
+      <div>
+        <label class="block mb-1 font-semibold text-gray-600">Email</label>
+        <input type="email" id="email" class="w-full border rounded-lg p-3" placeholder="your.email@govt.local" required>
+      </div>
+
+      <div>
+        <label class="block mb-1 font-semibold text-gray-600">Government ID</label>
+        <input type="text" id="govt_id" class="w-full border rounded-lg p-3" placeholder="e.g., GOVT-001, MCD-101" required>
+        {% if form_type == "go_register" %}
+        <small class="text-gray-500 text-xs mt-1 block">Valid IDs: GOVT-001 to GOVT-005, MCD-101 to MCD-103, POLICE-001 to POLICE-002</small>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Citizen Email (PC Login & Register only) -->
+      {% if form_type == "pc_login" or form_type == "pc_register" %}
+      <div>
+        <label class="block mb-1 font-semibold text-gray-600">Email</label>
+        <input type="email" id="email" class="w-full border rounded-lg p-3" required>
+      </div>
+      {% endif %}
+
+      <!-- Password -->
+      <div>
+        <label class="block mb-1 font-semibold text-gray-600">Password</label>
+        <input type="password" id="password" class="w-full border rounded-lg p-3" required>
+      </div>
+
+      <button type="submit"
+        class="w-full {% if 'login' in form_type %}bg-blue-600{% else %}bg-green-i{% endif %}
+        text-white font-semibold py-3 rounded-lg hover:opacity-90 transition">
+        {% if 'login' in form_type %}Login{% else %}Register{% endif %}
+      </button>
+    </form>
+
+    <!-- SWITCH LINKS -->
+    <p class="mt-6 text-center text-sm text-gray-600">
+      {% if form_type == "pc_login" %}
+        New user? <a href="/register/" class="text-blue-600 hover:underline">Register here</a>
+
+      {% elif form_type == "pc_register" %}
+        Already registered? <a href="/login/" class="text-blue-600 hover:underline">Login here</a>
+
+      {% elif form_type == "go_login" %}
+        New user? <a href="/go-register/" class="text-green-i hover:underline">Request Access</a>
+
+      {% else %}
+        Already registered? <a href="/go-login/" class="text-green-i hover:underline">Login here</a>
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+<!-- =======================================================
+     FIXED & FINAL AUTH SCRIPT
+======================================================= -->
+<script>
+document.getElementById("authForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const formType = "{{ form_type }}";
+    let url, payload = {};
+
+    // -----------------------------
+    // PUBLIC CITIZEN LOGIN
+    // -----------------------------
+    if (formType === "pc_login") {
+        url = "/api/auth/login/";
+        payload = {
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value
+        };
+    }
+
+    // -----------------------------
+    // PUBLIC CITIZEN REGISTRATION
+    // -----------------------------
+    if (formType === "pc_register") {
+
+        let fullName = document.getElementById("name").value.trim();
+        let firstName = fullName.split(" ")[0];
+        let lastName = fullName.split(" ").slice(1).join(" ");
+
+        url = "/api/auth/register/";
+        payload = {
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value,
+            first_name: firstName,
+            last_name: lastName
+        };
+    }
+
+    // -----------------------------
+    // GOVERNMENT OFFICIAL LOGIN
+    // -----------------------------
+    if (formType === "go_login") {
+        url = "/api/govt/login/";
+        payload = {
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value,
+            govt_id: document.getElementById("govt_id").value
+        };
+    }
+
+    // -----------------------------
+    // GOVERNMENT OFFICIAL REGISTRATION
+    // -----------------------------
+    if (formType === "go_register") {
+        let fullName = document.getElementById("name").value.trim();
+        let firstName = fullName.split(" ")[0];
+        let lastName = fullName.split(" ").slice(1).join(" ");
+
+        url = "/api/govt/register/";
+        payload = {
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value,
+            first_name: firstName,
+            last_name: lastName,
+            govt_id: document.getElementById("govt_id").value
+        };
+    }
+
+    try {
+        const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        
+        // Debug logging
+        console.log("📤 Request to:", url);
+        console.log("📋 Payload:", payload);
+        console.log("📥 Response Status:", res.status);
+        console.log("📥 Response Data:", data);
+
+        if (res.ok) {
+            if (data.token) {
+                localStorage.setItem("auth_token", data.token);
+                // Also store GO token if it's a government official
+                if (data.go_token) {
+                    localStorage.setItem("go_auth_token", data.go_token);
+                }
+            }
+
+            Swal.fire({
+                icon: "success",
+                title: "Success",
+                text: formType.includes("register")
+                    ? "Registration Successful!"
+                    : "Login Successful!",
+                timer: 1000,
+                showConfirmButton: false
+            });
+
+            setTimeout(() => {
+                // Redirect based on form type
+                if (formType === "pc_login" || formType === "pc_register") {
+                    window.location.href = "/public/";
+                } else if (formType === "go_login" || formType === "go_register") {
+                    window.location.href = "/go-dashboard/";
+                } else {
+                    window.location.href = "/";
+                }
+            }, 1100);
+
+        } else {
+            // Try to get detailed error message
+            let errorMsg = "Invalid credentials.";
+            if (data.error) {
+                errorMsg = data.error;
+            } else if (data.govt_id) {
+                errorMsg = Array.isArray(data.govt_id) ? data.govt_id[0] : data.govt_id;
+            } else if (data.email) {
+                errorMsg = Array.isArray(data.email) ? data.email[0] : data.email;
+            }
+            
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: errorMsg
+            });
+        }
+
+    } catch (err) {
+        console.error("Error:", err);
+        Swal.fire({
+            icon: "warning",
+            title: "Network Error",
+            text: "Server unreachable."
+        });
+    }
+});
+</script>
+
+{% endblock %}

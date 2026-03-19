@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCFMS - {% block title %}Smart City Feedback{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        .bg-saffron { background-color: #FF9933; }
+        .bg-green-i { background-color: #138808; }
+        .text-saffron { color: #FF9933; }
+        .text-green-i { color: #138808; }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+    {% if request.path != '/' %}
+    <!-- HEADER (Flag Strip + SCFMS logo only) -->
+    <header class="bg-white shadow-md sticky top-0 z-10">
+
+        <!-- Indian Flag Strip -->
+        <div class="h-1 flex w-full">
+            <div class="flex-1 bg-saffron"></div>
+            <div class="flex-1 bg-white"></div>
+            <div class="flex-1 bg-green-i"></div>
+        </div>
+
+        <!-- Logo + Dynamic Navbar Block -->
+        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            
+            <!-- Logo -->
+            <h1 class="text-3xl font-extrabold text-blue-600">SCFMS</h1>
+
+            <!-- NAVBAR BLOCK (Child Templates Override This) -->
+            <div class="flex items-center space-x-6">
+                {% block nav_links %}
+                <!-- Default empty. Child pages will insert nav here. -->
+                {% endblock %}
+            </div>
+
+        </div>
+    </header>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="{% if request.path != '/' %}max-w-7xl mx-auto py-6 sm:px-6 lg:px-8{% endif %}">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
