@@ -16,6 +16,7 @@ from complaints.views import (
     go_login_view,
     go_register_view_html,
     go_dashboard_view,
+    complaint_detail_view,
     complaint_form_view,
 
     # API views
@@ -82,7 +83,8 @@ urlpatterns = [
     path('go-login/', go_login_view, name='go-login-html'),
     path('go-register/', go_register_view_html, name='go-register-html'),
     path('go-dashboard/', go_dashboard_view, name='go-dashboard'),
-    path('dashboard/', go_dashboard_view, name='go-dashboard-alt'),  # Backwards compatibility
+    path('dashboard/', go_dashboard_view, name='go-dashboard-alt'),
+    path('go/complaint/<int:complaint_id>/', complaint_detail_view, name='complaint-detail'),
 
     # --- PUBLIC API ROUTES ---
     path('api/auth/register/', PCRedistrationView.as_view(), name='pc-register-api'),

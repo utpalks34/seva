@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+{% block title %}Complaint Detail | SCFMS{% endblock %}
+{% block nav_links %}{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Complaint Detail – SCFMS</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:#f0f4f8; min-height:100vh; }
+
+  .page-header {
+    background: linear-gradient(135deg,#1e3a8a,#1e40af,#06b6d4);
+    color:#fff; padding:1.2rem 2rem;
+    display:flex; align-items:center; gap:1rem; flex-wrap:wrap;
+  }
+  .page-header a { color:rgba(255,255,255,.8); text-decoration:none; font-size:.9rem; }
+  .page-header a:hover { color:#fff; }
+  .page-header h1 { font-size:1.2rem; font-weight:700; flex:1; }
+
+  .container { max-width:900px; margin:2rem auto; padding:0 1.5rem; }
+
+  .card {
+    background:#fff; border-radius:1rem;
+    box-shadow:0 4px 24px rgba(30,58,138,.08);
+    overflow:hidden; margin-bottom:1.5rem;
+  }
+  .card-header {
+    padding:1.1rem 1.5rem;
+    background:linear-gradient(135deg,#eff6ff,#f0fdfa);
+    border-bottom:1px solid #e2e8f0;
+    display:flex; align-items:center; gap:.6rem;
+  }
+  .card-header h2 { font-size:1rem; font-weight:700; color:#1e293b; }
+  .card-body { padding:1.5rem; }
+
+  /* Badges */
+  .badge {
+    display:inline-block; padding:.25rem .75rem;
+    border-radius:999px; font-size:.78rem; font-weight:700; color:#fff;
+  }
+  .badge-pending  { background:#f59e0b; }
+  .badge-progress { background:#3b82f6; }
+  .badge-resolved { background:#059669; }
+  .badge-severity-high { background:#dc2626; }
+  .badge-severity-med  { background:#f59e0b; }
+  .badge-severity-low  { background:#64748b; }
+  .badge-category { background:#6366f1; }
+
+  /* Image */
+  .complaint-img {
+    width:100%; max-height:420px; object-fit:cover;
+    border-radius:.75rem; border:2px solid #e2e8f0;
+  }
+  .no-img {
+    height:200px; background:#f8fafc; border-radius:.75rem;
+    border:2px dashed #cbd5e1;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:.5rem; color:#94a3b8;
+  }
+
+  /* Info grid */
+  .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  @media(max-width:600px){ .info-grid { grid-template-columns:1fr; } }
+  .info-item { background:#f8fafc; border-radius:.6rem; padding:1rem; }
+  .info-item label {
+    display:block; font-size:.72rem; text-transform:uppercase;
+    color:#94a3b8; font-weight:700; margin-bottom:.3rem;
+  }
+  .info-item p { font-size:.95rem; font-weight:600; color:#1e293b; }
+
+  /* Description */
+  .desc-box {
+    background:#f8fafc; border-radius:.6rem; padding:1rem;
+    font-size:.95rem; color:#334155; line-height:1.7; white-space:pre-wrap;
+  }
+
+  /* Actions */
+  .action-row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; }
+  .btn {
+    padding:.55rem 1.2rem; border:none; border-radius:.6rem;
+    font-size:.9rem; font-weight:700; cursor:pointer; transition:.15s;
+  }
+  .btn:hover { opacity:.88; }
+  .btn-accept  { background:#3b82f6; color:#fff; }
+  .btn-resolve { background:#059669; color:#fff; }
+  .btn-back    { background:#e2e8f0; color:#475569; }
+  .btn-dup     { background:#64748b; color:#fff; }
+
+  #statusMsg {
+    display:none; padding:.6rem 1rem; border-radius:.5rem;
+    font-size:.87rem; font-weight:600; margin-top:.75rem;
+  }
+  .msg-ok  { background:#d1fae5; color:#065f46; display:block!important; }
+  .msg-err { background:#fee2e2; color:#991b1b; display:block!important; }
+
+  /* Map embed */
+  #miniMap { width:100%; height:260px; border-radius:.75rem; border:2px solid #e2e8f0; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <a href="/go-dashboard/">← Back to Dashboard</a>
+  <h1>📋 Complaint Detail</h1>
+  <span id="headerBadge" class="badge"></span>
+</div>
+
+<div class="container">
+
+  <!-- Loading -->
+  <div id="loadingMsg" style="text-align:center;padding:3rem;color:#64748b;font-size:1.1rem;">
+    ⏳ Loading complaint details…
+  </div>
+
+  <!-- Error -->
+  <div id="errorMsg" style="display:none;text-align:center;padding:3rem;color:#dc2626;font-size:1rem;">
+    ❌ <span id="errorText"></span>
+  </div>
+
+  <!-- Content (hidden until loaded) -->
+  <div id="content" style="display:none;">
+
+    <!-- Image Card -->
+    <div class="card">
+      <div class="card-body" style="padding:0;overflow:hidden;border-radius:1rem;">
+        <img id="cdImage" class="complaint-img" src="" alt="Complaint Image" style="display:none;">
+        <div id="cdNoImage" class="no-img">
+          <span style="font-size:3rem;">📷</span>
+          <span>No image submitted</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Title + Badges Card -->
+    <div class="card">
+      <div class="card-body">
+        <h2 id="cdTitle" style="font-size:1.4rem;font-weight:800;color:#1e293b;margin-bottom:.75rem;"></h2>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+          <span id="cdStatus" class="badge"></span>
+          <span id="cdSeverity" class="badge"></span>
+          <span id="cdCategory" class="badge badge-category"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Details Grid -->
+    <div class="card">
+      <div class="card-header"><h2>📋 Complaint Details</h2></div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item">
+            <label>👤 Citizen Name</label>
+            <p id="cdName">—</p>
+          </div>
+          <div class="info-item">
+            <label>📧 Citizen Email</label>
+            <p id="cdEmail">—</p>
+          </div>
+          <div class="info-item">
+            <label>🗂 Category</label>
+            <p id="cdCategoryText">—</p>
+          </div>
+          <div class="info-item">
+            <label>📅 Submitted On</label>
+            <p id="cdDate">—</p>
+          </div>
+          <div class="info-item" style="grid-column:1/-1;">
+            <label>🔥 AI Severity Score</label>
+            <p id="cdSeverityText">—</p>
+          </div>
+        </div>
+
+        <div style="margin-top:1rem;">
+          <label style="display:block;font-size:.72rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:.5rem;">📝 Full Description</label>
+          <div id="cdDescription" class="desc-box">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Location Card -->
+    <div class="card" id="locationCard">
+      <div class="card-header"><h2>📍 Location</h2></div>
+      <div class="card-body">
+        <p id="cdLocationText" style="font-size:.95rem;color:#334155;margin-bottom:.75rem;font-weight:600;"></p>
+        <div id="miniMap"></div>
+        <a id="cdMapLink" href="#" target="_blank"
+           style="display:inline-block;margin-top:.6rem;font-size:.87rem;color:#3b82f6;font-weight:600;">
+          🗺 Open in Google Maps →
+        </a>
+      </div>
+    </div>
+
+    <!-- Actions Card -->
+    <div class="card">
+      <div class="card-header"><h2>⚡ Actions</h2></div>
+      <div class="card-body">
+        <div class="action-row">
+          <button class="btn btn-back" onclick="history.back()">← Back</button>
+          <button id="btnAccept"  class="btn btn-accept"  style="display:none;" onclick="updateStatus('I')">✅ Accept Complaint</button>
+          <button id="btnResolve" class="btn btn-resolve" style="display:none;" onclick="updateStatus('R')">🏁 Mark Resolved</button>
+          <span id="resolvedLabel" style="display:none;color:#059669;font-weight:700;font-size:1rem;">✅ Complaint Resolved</span>
+        </div>
+        <div id="statusMsg"></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div>
+
+<!-- Leaflet for mini-map -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+  const GO_TOKEN = localStorage.getItem('go_auth_token') || localStorage.getItem('auth_token');
+
+  // Get complaint ID from URL: /go/complaint/7/
+  const pathParts = window.location.pathname.split('/').filter(Boolean);
+  const COMPLAINT_ID = pathParts[pathParts.length - 1];
+
+  const CATEGORY_NAMES = {
+    'RO':'Roads / Potholes','GA':'Garbage / Waste',
+    'UT':'Utilities','PB':'Public Behavior','OT':'Other'
+  };
+
+  async function loadComplaint() {
+    if (!GO_TOKEN) {
+      showError('Not authenticated. Please login first.');
+      return;
+    }
+    try {
+      const r = await fetch(`/api/govt/complaints/${COMPLAINT_ID}/`, {
+        headers: { 'Authorization': `Token ${GO_TOKEN}` }
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const c = await r.json();
+      render(c);
+    } catch(e) {
+      showError('Failed to load complaint: ' + e.message);
+    }
+  }
+
+  function render(c) {
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+
+    // Title
+    document.getElementById('cdTitle').textContent = c.title;
+    document.title = c.title + ' | SCFMS';
+
+    // Status badge
+    const statusMap = {P:'⏳ Pending',I:'🔄 In Progress',R:'✅ Resolved'};
+    const statusClass = {P:'badge-pending',I:'badge-progress',R:'badge-resolved'};
+    const sb = document.getElementById('cdStatus');
+    sb.textContent = statusMap[c.status] || c.status;
+    sb.className = 'badge ' + (statusClass[c.status] || '');
+    document.getElementById('headerBadge').textContent = statusMap[c.status] || c.status;
+    document.getElementById('headerBadge').className = 'badge ' + (statusClass[c.status] || '');
+
+    // Severity badge
+    const sevScore = c.severity_score || 0;
+    const sevBadge = document.getElementById('cdSeverity');
+    sevBadge.textContent = `🔥 Severity: ${sevScore}%`;
+    sevBadge.className = 'badge ' + (sevScore>=70 ? 'badge-severity-high' : sevScore>=40 ? 'badge-severity-med' : 'badge-severity-low');
+    document.getElementById('cdSeverityText').textContent = `${sevScore}% — ${sevScore>=70?'🔴 High Priority':sevScore>=40?'🟡 Medium':'🟢 Low Priority'}`;
+
+    // Category
+    const catName = CATEGORY_NAMES[c.category] || c.category;
+    document.getElementById('cdCategory').textContent = catName;
+    document.getElementById('cdCategoryText').textContent = catName;
+
+    // Citizen
+    document.getElementById('cdName').textContent = c.user_name || 'Unknown';
+    document.getElementById('cdEmail').textContent = c.user_email || '—';
+
+    // Date
+    document.getElementById('cdDate').textContent = new Date(c.created_at).toLocaleString();
+
+    // Description
+    document.getElementById('cdDescription').textContent = c.description || '—';
+
+    // Image
+    if (c.image) {
+      document.getElementById('cdImage').src = c.image;
+      document.getElementById('cdImage').style.display = 'block';
+      document.getElementById('cdNoImage').style.display = 'none';
+    }
+
+    // Location & Map
+    const lat = parseFloat(c.latitude);
+    const lng = parseFloat(c.longitude);
+    if (lat && lng) {
+      document.getElementById('cdLocationText').textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      document.getElementById('cdMapLink').href = `https://www.google.com/maps?q=${lat},${lng}`;
+      setTimeout(() => {
+        const map = L.map('miniMap').setView([lat, lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          { attribution:'© OpenStreetMap' }).addTo(map);
+        L.marker([lat, lng]).addTo(map)
+         .bindPopup(`<strong>${c.title}</strong>`).openPopup();
+      }, 100);
+    } else {
+      document.getElementById('locationCard').style.display = 'none';
+    }
+
+    // Action buttons
+    if (c.status === 'P') {
+      document.getElementById('btnAccept').style.display = 'inline-block';
+    } else if (c.status === 'I') {
+      document.getElementById('btnResolve').style.display = 'inline-block';
+    } else {
+      document.getElementById('resolvedLabel').style.display = 'inline-block';
+    }
+  }
+
+  async function updateStatus(newStatus) {
+    const msg = document.getElementById('statusMsg');
+    msg.className = ''; msg.textContent = 'Updating…'; msg.style.display = 'block';
+    try {
+      const r = await fetch(`/api/govt/complaints/${COMPLAINT_ID}/`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Token ${GO_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      msg.className = 'msg-ok';
+      msg.textContent = newStatus === 'I' ? '✅ Complaint accepted! Citizen notified.' : '🏁 Complaint marked resolved!';
+      setTimeout(() => loadComplaint(), 1200);
+    } catch(e) {
+      msg.className = 'msg-err';
+      msg.textContent = 'Update failed: ' + e.message;
+    }
+  }
+
+  function showError(text) {
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('errorText').textContent = text;
+    document.getElementById('errorMsg').style.display = 'block';
+  }
+
+  loadComplaint();
+</script>
+
+</body>
+</html>
+{% endblock %}

@@ -892,7 +892,7 @@
         <div class="filter-section">
             <div class="filter-group">
                 <label>Status Filter</label>
-                <select id="statusFilter">
+                <select id="statusFilter" onchange="fetchAndRenderComplaints()">
                     <option value="">All Status</option>
                     <option value="P">⏳ Pending</option>
                     <option value="I">🔄 In Progress</option>
@@ -901,7 +901,7 @@
             </div>
             <div class="filter-group">
                 <label>Category Filter</label>
-                <select id="categoryFilter">
+                <select id="categoryFilter" onchange="fetchAndRenderComplaints()">
                     <option value="">All Categories</option>
                     <option value="RO">🛣️ Roads/Potholes</option>
                     <option value="GA">🗑️ Garbage/Waste</option>
@@ -921,6 +921,7 @@
                         <thead>
                             <tr>
                                 <th>Severity</th>
+                                <th>Image</th>
                                 <th>Complaint</th>
                                 <th>Category</th>
                                 <th>Status</th>
@@ -1096,11 +1097,17 @@
 
     <script>
         const GO_AUTH_TOKEN = localStorage.getItem('go_auth_token') || localStorage.getItem('auth_token');
+
+        // ── Auth Guard: redirect to login if no token ──
+        if (!GO_AUTH_TOKEN) {
+            alert('⚠️ Session expired. Please login again.');
+            window.location.href = '/go-login/';
+        }
+
         const complaintsTableBody = document.getElementById('complaintsTableBody');
         const statusFilter = document.getElementById('statusFilter');
         const categoryFilter = document.getElementById('categoryFilter');
         const applyFilterBtn = document.getElementById('applyFilterBtn');
-
 
 
         let complaintMap; // Global variable for the map instance
@@ -1502,7 +1509,9 @@
 
 
         async function fetchAndRenderComplaints() {
-            complaintsTableBody.innerHTML = '<tr><td colspan="6" class="no-data">⏳ Loading complaints...</td></tr>';
+            // Re-read token at call time (in case it was set after page load)
+            const token = localStorage.getItem('go_auth_token') || localStorage.getItem('auth_token') || GO_AUTH_TOKEN;
+            complaintsTableBody.innerHTML = '<tr><td colspan="7" class="no-data">⏳ Loading complaints...</td></tr>';
 
             const status = statusFilter.value;
             const category = categoryFilter.value;
@@ -1514,20 +1523,30 @@
             try {
                 const response = await fetch(url, {
                     method: 'GET',
-                    headers: { 'Authorization': `Token ${GO_AUTH_TOKEN}`, 'Content-Type': 'application/json' },
+                    headers: { 'Authorization': `Token ${token}`, 'Content-Type': 'application/json' },
                 });
+
+                console.log('🔍 fetchAndRenderComplaints token:', token ? token.substring(0,10)+'…' : 'NULL');
+                console.log('🔍 API URL:', url, 'Status:', response.status);
 
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
                 const data = await response.json();
+                console.log('📦 API response type:', Array.isArray(data) ? 'array' : typeof data, 'length/keys:', Array.isArray(data) ? data.length : Object.keys(data));
 
-                // RENDER MAP HERE, USING ALL FETCHED DATA
-                // Map needs the raw list of complaint objects, not just the filtered results
-                initMap(data.results || []);
+                // Handle both plain array and DRF paginated {results:[]} responses
+                const complaintsList = Array.isArray(data) ? data : (data.results || []);
+                console.log('📋 Complaints to render:', complaintsList.length);
+
+                // Cache complaints for detail modal lookup
+                _complaintsCache = {};
+                complaintsList.forEach(c => { _complaintsCache[c.id] = c; });
+
+                // RENDER MAP
+                initMap(complaintsList);
 
                 // Render table rows
                 complaintsTableBody.innerHTML = '';
-                const complaintsList = data.results || [];
 
                 if (complaintsList.length > 0) {
                     complaintsList.forEach(complaint => {
@@ -1537,12 +1556,19 @@
 
                         const submittedDate = new Date(complaint.created_at).toLocaleString();
 
+                        // Build image thumbnail cell
+                        const imgCell = complaint.image
+                            ? `<img src="${complaint.image}" alt="complaint" style="width:60px;height:50px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid #e2e8f0;" onclick="window.location.href='/go/complaint/${complaint.id}/'" title="Click to view details">`
+                            : `<div style="width:60px;height:50px;background:#f1f5f9;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;cursor:pointer;" onclick="window.location.href='/go/complaint/${complaint.id}/'">📷</div>`;
+
                         row.innerHTML = `
                         <td class="severity">${complaint.severity_score}%</td>
+                        <td>${imgCell}</td>
                         <td>
                             <div class="complaint-info">
-                                <div class="complaint-title">${complaint.title}</div>
-                                <div class="complaint-desc">${complaint.description}</div>
+                                <div class="complaint-title" style="cursor:pointer;color:#1e40af;font-weight:600;" onclick="window.location.href='/go/complaint/${complaint.id}/'">${complaint.title}</div>
+                                <div class="complaint-desc">${complaint.description.substring(0,80)}${complaint.description.length>80?'…':''}</div>
+                                <div style="font-size:.75rem;color:#64748b;margin-top:2px;">👤 ${complaint.user_name || complaint.user_email || 'Citizen'}</div>
                             </div>
                         </td>
                         <td>
@@ -1554,6 +1580,7 @@
                         <td class="submitted-date">${submittedDate}</td>
                         <td>
                             <div style="display:flex;flex-direction:column;gap:5px;">
+                                <button onclick="window.location.href='/go/complaint/${complaint.id}/'" style="background:#0f766e;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:700;">👁️ View Details</button>
                                 ${generateActionButton(complaint.id, complaint.status)}
                                 ${complaint.status !== 'R' ? `<button
                                     onclick="openMarkDuplicateModal(${complaint.id}, '${complaint.title.replace(/'/g, "\\'")}')"
@@ -1562,15 +1589,17 @@
                             </div>
                         </td>
                     `;
+                        // Store complaint data for modal
+                        row.dataset.complaint = JSON.stringify(complaint);
                         complaintsTableBody.appendChild(row);
                     });
                 } else {
-                    complaintsTableBody.innerHTML = '<tr><td colspan="6" class="empty-state">📭 No complaints matching your filters</td></tr>';
+                    complaintsTableBody.innerHTML = '<tr><td colspan="7" class="empty-state">📭 No complaints matching your filters</td></tr>';
                 }
 
             } catch (error) {
-                console.error('Error fetching complaints:', error);
-                complaintsTableBody.innerHTML = `<tr><td colspan="6" class="no-data">❌ Error loading data. Check console.</td></tr>`;
+                console.error('❌ Error fetching complaints:', error);
+                complaintsTableBody.innerHTML = `<tr><td colspan="7" class="no-data">❌ Error: ${error.message}</td></tr>`;
             }
         }
 
@@ -1802,7 +1831,60 @@
             setTimeout(() => advHeatmapInstance.invalidateSize(), 300);
         }
 
-        // ─── DOMContentLoaded: boot up the dashboard ──────────────────
+        // ─── Complaint Detail Modal ────────────────────────────────────
+        // Global map of loaded complaints for detail lookup
+        let _complaintsCache = {};
+
+        function openComplaintDetail(id) {
+            const c = _complaintsCache[id];
+            if (!c) return;
+
+            const STATUS_LABELS = { 'P': '⏳ Pending', 'I': '🔄 In Progress', 'R': '✅ Resolved' };
+            const modal = document.getElementById('complaintDetailModal');
+            const statusCol = { 'P': '#f59e0b', 'I': '#3b82f6', 'R': '#059669' };
+
+            document.getElementById('cdmTitle').textContent = c.title;
+            document.getElementById('cdmBadgeStatus').textContent = STATUS_LABELS[c.status] || c.status;
+            document.getElementById('cdmBadgeStatus').style.background = statusCol[c.status] || '#6b7280';
+            document.getElementById('cdmBadgeSeverity').textContent = `🔥 Severity: ${c.severity_score}%`;
+            document.getElementById('cdmBadgeSeverity').style.background = c.severity_score >= 70 ? '#dc2626' : '#64748b';
+            document.getElementById('cdmCategory').textContent = getCategoryName(c.category);
+            document.getElementById('cdmCitizen').textContent = `${c.user_name || 'Unknown'} — ${c.user_email || ''}`;
+            document.getElementById('cdmDate').textContent = new Date(c.created_at).toLocaleString();
+            document.getElementById('cdmDescription').textContent = c.description;
+
+            // Image
+            const imgEl = document.getElementById('cdmImage');
+            const noImgEl = document.getElementById('cdmNoImage');
+            if (c.image) {
+                imgEl.src = c.image; imgEl.style.display = 'block'; noImgEl.style.display = 'none';
+            } else {
+                imgEl.style.display = 'none'; noImgEl.style.display = 'flex';
+            }
+
+            // Location
+            const locEl = document.getElementById('cdmLocation');
+            if (c.latitude && c.longitude) {
+                locEl.innerHTML = `📍 ${parseFloat(c.latitude).toFixed(5)}, ${parseFloat(c.longitude).toFixed(5)}
+                    &nbsp;<a href="https://www.google.com/maps?q=${c.latitude},${c.longitude}" target="_blank"
+                       style="color:#3b82f6;font-size:.8rem;">🗺 View on Map</a>`;
+            } else {
+                locEl.textContent = '📍 Location not provided';
+            }
+
+            // Action buttons
+            const actEl = document.getElementById('cdmActions');
+            actEl.innerHTML = generateActionButton(c.id, c.status) ||
+                '<span style="color:#059669;font-weight:700;">✅ Resolved</span>';
+
+            modal.style.display = 'flex';
+        }
+
+        function closeComplaintDetail() {
+            document.getElementById('complaintDetailModal').style.display = 'none';
+        }
+
+
         document.addEventListener('DOMContentLoaded', () => {
 
             // Gracefully attempt WebSocket – never let WS errors crash the page
@@ -1973,7 +2055,89 @@
 
     </script>
 
+<!-- ═══════════════ COMPLAINT DETAIL MODAL ═══════════════ -->
+<div id="complaintDetailModal" onclick="if(event.target===this)closeComplaintDetail()"
+    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:20000;
+           align-items:center;justify-content:center;padding:1rem;">
+    <div style="background:#fff;border-radius:1.25rem;width:100%;max-width:680px;max-height:90vh;
+                overflow-y:auto;box-shadow:0 25px 80px rgba(15,23,42,.35);">
+
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,#1e40af,#06b6d4);padding:1.25rem 1.5rem;
+                    border-radius:1.25rem 1.25rem 0 0;display:flex;align-items:flex-start;gap:1rem;">
+            <div style="flex:1;">
+                <h3 id="cdmTitle" style="color:#fff;font-size:1.1rem;font-weight:700;margin:0 0 .5rem;"></h3>
+                <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                    <span id="cdmBadgeStatus" style="color:#fff;font-size:.75rem;font-weight:700;
+                          padding:.2rem .65rem;border-radius:999px;"></span>
+                    <span id="cdmBadgeSeverity" style="color:#fff;font-size:.75rem;font-weight:700;
+                          padding:.2rem .65rem;border-radius:999px;"></span>
+                </div>
+            </div>
+            <button onclick="closeComplaintDetail()"
+                style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:1.2rem;
+                       cursor:pointer;border-radius:.5rem;padding:.25rem .6rem;line-height:1;">✕</button>
+        </div>
+
+        <!-- Body -->
+        <div style="padding:1.5rem;display:flex;flex-direction:column;gap:1.2rem;">
+
+            <!-- Image -->
+            <div style="border-radius:.75rem;overflow:hidden;border:2px solid #e2e8f0;background:#f8fafc;">
+                <img id="cdmImage" src="" alt="Complaint Image"
+                     style="width:100%;max-height:320px;object-fit:cover;display:none;">
+                <div id="cdmNoImage"
+                     style="height:160px;display:flex;align-items:center;justify-content:center;
+                            flex-direction:column;gap:.5rem;color:#94a3b8;">
+                    <span style="font-size:2.5rem;">📷</span>
+                    <span style="font-size:.85rem;">No image provided</span>
+                </div>
+            </div>
+
+            <!-- Info grid -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+                <div style="background:#f8fafc;border-radius:.6rem;padding:.75rem;">
+                    <div style="font-size:.72rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:.25rem;">Category</div>
+                    <div id="cdmCategory" style="font-weight:600;color:#1e293b;font-size:.9rem;"></div>
+                </div>
+                <div style="background:#f8fafc;border-radius:.6rem;padding:.75rem;">
+                    <div style="font-size:.72rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:.25rem;">Submitted</div>
+                    <div id="cdmDate" style="font-weight:600;color:#1e293b;font-size:.85rem;"></div>
+                </div>
+                <div style="background:#f8fafc;border-radius:.6rem;padding:.75rem;grid-column:1/-1;">
+                    <div style="font-size:.72rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:.25rem;">👤 Citizen</div>
+                    <div id="cdmCitizen" style="font-weight:600;color:#1e293b;font-size:.9rem;"></div>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div style="background:#f8fafc;border-radius:.6rem;padding:.75rem;">
+                <div style="font-size:.72rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:.4rem;">📝 Description</div>
+                <div id="cdmDescription" style="color:#334155;font-size:.9rem;line-height:1.6;white-space:pre-wrap;"></div>
+            </div>
+
+            <!-- Location -->
+            <div style="background:#f8fafc;border-radius:.6rem;padding:.75rem;">
+                <div style="font-size:.72rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:.4rem;">Location</div>
+                <div id="cdmLocation" style="color:#334155;font-size:.9rem;"></div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;padding-top:.25rem;">
+                <div id="cdmActions"></div>
+                <button onclick="closeComplaintDetail()"
+                    style="background:#f1f5f9;color:#475569;border:none;border-radius:.6rem;
+                           padding:.5rem 1.1rem;font-size:.87rem;cursor:pointer;font-weight:600;">
+                    ✕ Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ═══════════════ END COMPLAINT DETAIL MODAL ═══════════════ -->
+
 <!-- ══════════════════════ CHAT WIDGET (GO) ══════════════════════ -->
+
 <style>
     #chatBubble {
         position:fixed;bottom:28px;right:28px;z-index:10000;

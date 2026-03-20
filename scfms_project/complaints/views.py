@@ -77,9 +77,11 @@ def complaint_form_view(request):
 
 def go_dashboard_view(request):
     """Serves the Government Official Dashboard HTML."""
-    # NOTE: Add auth check here for production (omitted for cleaner presentation focus)
     return render(request, 'go_dashboard.html')
 
+def complaint_detail_view(request, complaint_id):
+    """Serves the GO Complaint Detail page."""
+    return render(request, 'complaint_detail.html', {'complaint_id': complaint_id})
 
 # --- 1. PUBLIC CITIZEN AUTH & API VIEWS ---
 
