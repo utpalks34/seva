@@ -151,6 +151,12 @@ class ComplaintViewSet(viewsets.ModelViewSet):
     queryset = Complaint.objects.all()
     serializer_class = ComplaintRegistrationSerializer
 
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            from .serializers import ComplaintListSerializer
+            return ComplaintListSerializer
+        return self.serializer_class
+
     def get_permissions(self):
         if self.action == 'create' or self.action == 'list':
             self.permission_classes = [IsPublicCitizen]

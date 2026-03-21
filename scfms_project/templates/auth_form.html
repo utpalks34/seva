@@ -188,11 +188,22 @@ document.getElementById("authForm").addEventListener("submit", async function(e)
         console.log("📥 Response Data:", data);
 
         if (res.ok) {
-            if (data.token) {
-                localStorage.setItem("auth_token", data.token);
-                // Also store GO token if it's a government official
+            // Clear ALL old tokens first to prevent cross-contamination
+            localStorage.removeItem("auth_token");
+            localStorage.removeItem("go_auth_token");
+
+            if (formType === "go_login" || formType === "go_register") {
+                // Government login: store token ONLY as go_auth_token
+                if (data.token) {
+                    localStorage.setItem("go_auth_token", data.token);
+                }
                 if (data.go_token) {
                     localStorage.setItem("go_auth_token", data.go_token);
+                }
+            } else {
+                // Citizen login: store token ONLY as auth_token
+                if (data.token) {
+                    localStorage.setItem("auth_token", data.token);
                 }
             }
 

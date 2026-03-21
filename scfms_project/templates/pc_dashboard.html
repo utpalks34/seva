@@ -141,6 +141,53 @@
             font-weight: 700;
             animation: pulse 2s ease-in-out infinite;
         }
+        .notification-badge.hidden { display: none; }
+
+        /* Notification Dropdown Panel */
+        .notif-panel {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 380px;
+            max-height: 440px;
+            background: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 12px 48px rgba(15,23,42,.18);
+            border: 1px solid var(--border);
+            z-index: 9999;
+            overflow: hidden;
+            margin-top: .5rem;
+        }
+        .notif-panel.open { display: block; }
+        .notif-panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, #f0f9ff, #f5f3ff);
+        }
+        .notif-panel-header h3 { font-size: .95rem; font-weight: 700; color: var(--text-primary); }
+        .notif-panel-header button {
+            background: none; border: none; color: var(--primary); cursor: pointer;
+            font-size: .8rem; font-weight: 600;
+        }
+        .notif-panel-body {
+            overflow-y: auto; max-height: 360px; padding: .5rem 0;
+        }
+        .notif-item {
+            padding: .85rem 1.25rem;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background .2s;
+            cursor: default;
+        }
+        .notif-item:hover { background: #f8fafc; }
+        .notif-item.unread { background: #eff6ff; border-left: 3px solid var(--primary); }
+        .notif-item p { font-size: .88rem; color: var(--text-primary); line-height: 1.5; margin: 0; }
+        .notif-item .notif-time { font-size: .72rem; color: var(--text-secondary); margin-top: .3rem; }
+        .notif-empty {
+            text-align: center; padding: 2.5rem 1rem; color: var(--text-secondary);
+        }
+        .notif-empty span { font-size: 2.5rem; display: block; margin-bottom: .5rem; }
 
         .profile-dropdown {
             position: relative;
@@ -553,10 +600,12 @@
             100% {
                 box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
             }
+        }
 
-            50% {
-                box-shadow: 0 4px 20px rgba(15, 102, 102, 0.15);
-            }
+        .status-declined {
+            background-color: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
         }
 
         /* Responsive */
@@ -614,13 +663,24 @@
                 <a href="/public/" class="nav-link">Dashboard</a>
                 <a href="/report/" class="nav-link">File Complaint</a>
 
-                <button class="notification-btn" title="Notifications">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                    <span class="notification-badge">3</span>
-                </button>
+                <div style="position:relative;">
+                    <button class="notification-btn" id="notifBellBtn" title="Notifications">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <span class="notification-badge hidden" id="notifBadge">0</span>
+                    </button>
+                    <div class="notif-panel" id="notifPanel">
+                        <div class="notif-panel-header">
+                            <h3>Notifications</h3>
+                            <button onclick="markAllRead()">Mark all read</button>
+                        </div>
+                        <div class="notif-panel-body" id="notifList">
+                            <div class="notif-empty"><span>🔔</span>No notifications yet</div>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="profile-dropdown">
                     <button class="profile-btn">
@@ -846,6 +906,7 @@
                 if (!res.ok) throw new Error('Failed to load complaints');
 
                 const complaints = await res.json();
+                window.allComplaints = complaints;
                 let pending = 0, resolved = 0;
                 const tbody = document.getElementById("complaint-list");
                 tbody.innerHTML = "";
@@ -873,19 +934,28 @@
                         } else if (c.status === "R") {
                             statusClass = 'status-resolved';
                             statusText = 'Resolved';
+                        } else if (c.status === "D") {
+                            statusClass = 'status-declined';
+                            statusText = 'Declined';
                         }
 
                         tbody.innerHTML += `
                             <tr style="animation: slideInUp 0.4s ease-out ${idx * 0.05}s both;">
                                 <td class="complaint-title">${c.title || 'N/A'}</td>
-                                <td>${c.category || 'General'}</td>
+                                <td>${c.category_display || c.category || 'General'}</td>
                                 <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                                <td>${new Date(c.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                                <td>${c.created_at ? new Date(c.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}</td>
                                 <td>
-                                    <button onclick="openTimeline(${c.id}, '${(c.title || '').replace(/'/g, "\\'")}')"
-                                        style="background:linear-gradient(135deg,#6366f1,#06b6d4);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
-                                        📋 Timeline
-                                    </button>
+                                    <div style="display:flex;gap:5px;">
+                                        <button onclick="showDetails(${c.id})"
+                                            style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
+                                            👁️ Details
+                                        </button>
+                                        <button onclick="openTimeline(${c.id}, '${(c.title || '').replace(/'/g, "\\'")}')"
+                                            style="background:linear-gradient(135deg,#6366f1,#06b6d4);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
+                                            📋 Timeline
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         `;
@@ -908,16 +978,143 @@
             }
         }
 
+        // ─── Notification System ────────────────────────────────────
+        let _notifCache = [];
+
+        async function fetchNotifications() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) return;
+            try {
+                const res = await fetch('/api/notifications/', {
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                _notifCache = Array.isArray(data) ? data : (data.results || []);
+                renderNotifications();
+            } catch(e) {
+                console.error('Notification fetch error:', e);
+            }
+        }
+
+        function renderNotifications() {
+            const list = document.getElementById('notifList');
+            const badge = document.getElementById('notifBadge');
+            const unreadCount = _notifCache.filter(n => !n.is_read).length;
+
+            // Update badge
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            // Render list
+            if (_notifCache.length === 0) {
+                list.innerHTML = '<div class="notif-empty"><span>🔔</span>No notifications yet</div>';
+                return;
+            }
+
+            list.innerHTML = _notifCache.slice(0, 20).map(n => {
+                const time = n.created_at ? new Date(n.created_at).toLocaleString('en-IN', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+                return `<div class="notif-item ${n.is_read ? '' : 'unread'}">
+                    <p>${n.message}</p>
+                    <div class="notif-time">${time}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function addLiveNotification(message) {
+            _notifCache.unshift({
+                message: message,
+                is_read: false,
+                created_at: new Date().toISOString()
+            });
+            renderNotifications();
+        }
+
+        function markAllRead() {
+            _notifCache.forEach(n => n.is_read = true);
+            renderNotifications();
+        }
+
+        // Bell click toggle
+        document.getElementById('notifBellBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            const panel = document.getElementById('notifPanel');
+            panel.classList.toggle('open');
+        });
+        // Close panel on outside click
+        document.addEventListener('click', function(e) {
+            const panel = document.getElementById('notifPanel');
+            if (panel && !panel.contains(e.target) && e.target.id !== 'notifBellBtn') {
+                panel.classList.remove('open');
+            }
+        });
+
+        // ─── Toast Notification ──────────────────────────────────────
+        function showNotificationToast(message) {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:10px;';
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement('div');
+            toast.style.cssText = 'background:#1e40af;color:#fff;padding:14px 20px;border-radius:10px;box-shadow:0 8px 32px rgba(30,64,175,.3);font-size:14px;font-weight:600;max-width:360px;display:flex;align-items:center;gap:10px;animation:slideInDown .4s ease;';
+            toast.innerHTML = `<span style="font-size:20px;">🔔</span><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100px)';
+                toast.style.transition = 'all .4s ease';
+                setTimeout(() => toast.remove(), 400);
+            }, 6000);
+        }
+
+        // ─── WebSocket ───────────────────────────────────────────────
+        function initWebSocket() {
+            const token = localStorage.getItem('auth_token');
+            if (!token) { console.log('No auth token, skipping WebSocket'); return; }
+
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/notifications/?token=${token}`;
+            const ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => console.log('WebSocket connected');
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log('WS message:', data);
+                if (data.type === 'notification') {
+                    showNotificationToast(data.message);
+                    addLiveNotification(data.message);
+                    loadComplaints(); // refresh complaint statuses
+                }
+            };
+            ws.onclose = (e) => {
+                console.log('WS closed, reconnecting in 5s...', e.code);
+                setTimeout(initWebSocket, 5000);
+            };
+            ws.onerror = (err) => console.error('WS error:', err);
+        }
+
+        // ─── Auto-refresh complaints every 30s ──────────────────────
+        setInterval(() => { loadComplaints(); }, 30000);
+
         // Logout functionality
         document.getElementById('logoutBtn').addEventListener('click', function () {
             localStorage.removeItem('auth_token');
+            localStorage.removeItem('go_auth_token');
             window.location.href = '/login/';
         });
 
-        // Initialize WebSocket on page load
+        // Initialize on page load
         window.addEventListener('DOMContentLoaded', () => {
             initWebSocket();
             loadComplaints();
+            fetchNotifications();
         });
 
         // Also add some CSS animations
@@ -1188,7 +1385,71 @@
         document.getElementById('timelineModal').addEventListener('click', function (e) {
             if (e.target === this) closeTimeline();
         });
+
+        // ─── Complaint Details Modal ─────────────────────────────────
+        function showDetails(id) {
+            const c = window.allComplaints.find(x => x.id === id);
+            if (!c) return;
+            
+            document.getElementById('detTitle').textContent = c.title || 'Complaint Details';
+            document.getElementById('detDesc').textContent = c.description || 'No description provided.';
+            
+            const mapping = {P:'⏳ Pending',I:'🔄 In Progress',R:'✅ Resolved',D:'❌ Declined'};
+            document.getElementById('detStatus').textContent = mapping[c.status] || c.status;
+            
+            document.getElementById('detDate').textContent = c.created_at ? new Date(c.created_at).toLocaleString() : 'N/A';
+            document.getElementById('detSev').textContent = c.severity_score ? `${c.severity_score}%` : 'N/A';
+            
+            if (c.image) {
+                document.getElementById('detImg').src = c.image;
+                document.getElementById('detImg').style.display = 'block';
+            } else {
+                document.getElementById('detImg').style.display = 'none';
+            }
+            
+            document.getElementById('detailsModal').style.display = 'flex';
+        }
+        
+        function closeDetails() {
+            document.getElementById('detailsModal').style.display = 'none';
+        }
+        
+        document.addEventListener('click', function (e) {
+            if (e.target.id === 'detailsModal') closeDetails();
+        });
     </script>
+    
+    <!-- Details Modal HTML -->
+    <div id="detailsModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;padding:1rem;">
+        <div style="background:#fff;border-radius:1.25rem;width:100%;max-width:550px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(15,23,42,.22);animation:tlSlideIn .3s ease-out;position:relative;">
+            <div style="padding:1.5rem;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:10;">
+                <h3 style="margin:0;font-size:1.2rem;color:#1e293b;">📋 Detail View</h3>
+                <button onclick="closeDetails()" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#94a3b8;">&times;</button>
+            </div>
+            <div style="padding:1.5rem;">
+                <h4 id="detTitle" style="font-size:1.3rem;font-weight:800;color:#0f172a;margin-bottom:1rem;"></h4>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+                    <div style="background:#f8fafc;padding:1rem;border-radius:.75rem;">
+                        <div style="font-size:.75rem;color:#64748b;font-weight:700;text-transform:uppercase;">Status</div>
+                        <div id="detStatus" style="font-weight:700;color:#1e293b;margin-top:.2rem;"></div>
+                    </div>
+                    <div style="background:#f8fafc;padding:1rem;border-radius:.75rem;">
+                        <div style="font-size:.75rem;color:#64748b;font-weight:700;text-transform:uppercase;">Date Filed</div>
+                        <div id="detDate" style="font-weight:600;color:#1e293b;margin-top:.2rem;"></div>
+                    </div>
+                    <div style="background:#f8fafc;padding:1rem;border-radius:.75rem;grid-column:1/-1;">
+                        <div style="font-size:.75rem;color:#64748b;font-weight:700;text-transform:uppercase;">AI Severity</div>
+                        <div id="detSev" style="font-weight:600;color:#dc2626;margin-top:.2rem;"></div>
+                    </div>
+                </div>
+                <div style="margin-bottom:1.5rem;">
+                    <div style="font-size:.85rem;color:#475569;font-weight:700;margin-bottom:.5rem;">DESCRIPTION</div>
+                    <div id="detDesc" style="background:#f1f5f9;padding:1rem;border-radius:.75rem;font-size:.95rem;color:#334155;white-space:pre-wrap;line-height:1.6;"></div>
+                </div>
+                <img id="detImg" src="" style="width:100%;border-radius:.75rem;border:2px solid #e2e8f0;display:none;">
+            </div>
+        </div>
+    </div>
 
 <!-- ══════════════════════ CHAT WIDGET ══════════════════════ -->
 <style>

@@ -202,8 +202,10 @@
         <div class="action-row">
           <button class="btn btn-back" onclick="history.back()">← Back</button>
           <button id="btnAccept"  class="btn btn-accept"  style="display:none;" onclick="updateStatus('I')">✅ Accept Complaint</button>
+          <button id="btnDecline" class="btn btn-decline" style="display:none; background:#dc2626; color:#fff;" onclick="updateStatus('D')">❌ Decline Complaint</button>
           <button id="btnResolve" class="btn btn-resolve" style="display:none;" onclick="updateStatus('R')">🏁 Mark Resolved</button>
           <span id="resolvedLabel" style="display:none;color:#059669;font-weight:700;font-size:1rem;">✅ Complaint Resolved</span>
+          <span id="declinedLabel" style="display:none;color:#dc2626;font-weight:700;font-size:1rem;">❌ Complaint Declined</span>
         </div>
         <div id="statusMsg"></div>
       </div>
@@ -254,8 +256,8 @@
     document.title = c.title + ' | SCFMS';
 
     // Status badge
-    const statusMap = {P:'⏳ Pending',I:'🔄 In Progress',R:'✅ Resolved'};
-    const statusClass = {P:'badge-pending',I:'badge-progress',R:'badge-resolved'};
+    const statusMap = {P:'⏳ Pending',I:'🔄 In Progress',R:'✅ Resolved',D:'❌ Declined'};
+    const statusClass = {P:'badge-pending',I:'badge-progress',R:'badge-resolved',D:'badge-severity-high'};
     const sb = document.getElementById('cdStatus');
     sb.textContent = statusMap[c.status] || c.status;
     sb.className = 'badge ' + (statusClass[c.status] || '');
@@ -311,10 +313,13 @@
     // Action buttons
     if (c.status === 'P') {
       document.getElementById('btnAccept').style.display = 'inline-block';
+      document.getElementById('btnDecline').style.display = 'inline-block';
     } else if (c.status === 'I') {
       document.getElementById('btnResolve').style.display = 'inline-block';
-    } else {
+    } else if (c.status === 'R') {
       document.getElementById('resolvedLabel').style.display = 'inline-block';
+    } else if (c.status === 'D') {
+      document.getElementById('declinedLabel').style.display = 'inline-block';
     }
   }
 
@@ -329,7 +334,11 @@
       });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       msg.className = 'msg-ok';
-      msg.textContent = newStatus === 'I' ? '✅ Complaint accepted! Citizen notified.' : '🏁 Complaint marked resolved!';
+      let successText = '';
+      if (newStatus === 'I') successText = '✅ Complaint accepted! Citizen notified.';
+      else if (newStatus === 'R') successText = '🏁 Complaint marked resolved!';
+      else if (newStatus === 'D') successText = '❌ Complaint declined! Citizen notified.';
+      msg.textContent = successText;
       setTimeout(() => loadComplaint(), 1200);
     } catch(e) {
       msg.className = 'msg-err';

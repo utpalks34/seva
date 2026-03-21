@@ -70,6 +70,7 @@ class Complaint(models.Model):
         ('P', 'Pending'),
         ('I', 'In Progress'),
         ('R', 'Resolved'),
+        ('D', 'Declined'),
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='complaints')
