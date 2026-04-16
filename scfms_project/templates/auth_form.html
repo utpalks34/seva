@@ -19,8 +19,12 @@
     {% elif form_type == "go_login" %}
       <h2 class="text-3xl font-bold mb-6 text-center text-blue-700">Government Login</h2>
 
-    {% elif form_type == "go_register" %}
-      <h2 class="text-3xl font-bold mb-6 text-center text-green-i">Government Registration</h2>
+    {% endif %}
+
+    {% if form_type == "go_login" and govt_notice %}
+    <div class="mb-5 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+      {{ govt_notice }}
+    </div>
     {% endif %}
 
     <!-- FORM -->
@@ -35,32 +39,16 @@
       </div>
       {% endif %}
 
-      <!-- Government Registration -->
-      {% if form_type == "go_register" %}
-      <div>
-        <label class="block mb-1 font-semibold text-gray-600">Full Name</label>
-        <input type="text" id="name" class="w-full border rounded-lg p-3" required>
-      </div>
-
+      <!-- Government ID & Email -->
+      {% if form_type == "go_login" %}
       <div>
         <label class="block mb-1 font-semibold text-gray-600">Email</label>
-        <input type="email" id="email" class="w-full border rounded-lg p-3" required>
-      </div>
-      {% endif %}
-
-      <!-- Government ID & Email (for login & register) -->
-      {% if form_type == "go_login" or form_type == "go_register" %}
-      <div>
-        <label class="block mb-1 font-semibold text-gray-600">Email</label>
-        <input type="email" id="email" class="w-full border rounded-lg p-3" placeholder="your.email@govt.local" required>
+        <input type="email" id="email" class="w-full border rounded-lg p-3" placeholder="your.email@gov.in" required>
       </div>
 
       <div>
         <label class="block mb-1 font-semibold text-gray-600">Government ID</label>
         <input type="text" id="govt_id" class="w-full border rounded-lg p-3" placeholder="e.g., GOVT-001, MCD-101" required>
-        {% if form_type == "go_register" %}
-        <small class="text-gray-500 text-xs mt-1 block">Valid IDs: GOVT-001 to GOVT-005, MCD-101 to MCD-103, POLICE-001 to POLICE-002</small>
-        {% endif %}
       </div>
       {% endif %}
 
@@ -94,10 +82,7 @@
         Already registered? <a href="/login/" class="text-blue-600 hover:underline">Login here</a>
 
       {% elif form_type == "go_login" %}
-        New user? <a href="/go-register/" class="text-green-i hover:underline">Request Access</a>
-
-      {% else %}
-        Already registered? <a href="/go-login/" class="text-green-i hover:underline">Login here</a>
+        Need access? <span class="text-gray-700">Contact your administrator to create your government account.</span>
       {% endif %}
     </p>
   </div>
@@ -154,24 +139,6 @@ document.getElementById("authForm").addEventListener("submit", async function(e)
         };
     }
 
-    // -----------------------------
-    // GOVERNMENT OFFICIAL REGISTRATION
-    // -----------------------------
-    if (formType === "go_register") {
-        let fullName = document.getElementById("name").value.trim();
-        let firstName = fullName.split(" ")[0];
-        let lastName = fullName.split(" ").slice(1).join(" ");
-
-        url = "/api/govt/register/";
-        payload = {
-            email: document.getElementById("email").value,
-            password: document.getElementById("password").value,
-            first_name: firstName,
-            last_name: lastName,
-            govt_id: document.getElementById("govt_id").value
-        };
-    }
-
     try {
         const res = await fetch(url, {
             method: "POST",
@@ -192,7 +159,7 @@ document.getElementById("authForm").addEventListener("submit", async function(e)
             localStorage.removeItem("auth_token");
             localStorage.removeItem("go_auth_token");
 
-            if (formType === "go_login" || formType === "go_register") {
+            if (formType === "go_login") {
                 // Government login: store token ONLY as go_auth_token
                 if (data.token) {
                     localStorage.setItem("go_auth_token", data.token);
@@ -210,8 +177,8 @@ document.getElementById("authForm").addEventListener("submit", async function(e)
             Swal.fire({
                 icon: "success",
                 title: "Success",
-                text: formType.includes("register")
-                    ? "Registration Successful!"
+                text: formType === "pc_register"
+                    ? "Registration successful. Please verify your email before logging in."
                     : "Login Successful!",
                 timer: 1000,
                 showConfirmButton: false
@@ -219,9 +186,11 @@ document.getElementById("authForm").addEventListener("submit", async function(e)
 
             setTimeout(() => {
                 // Redirect based on form type
-                if (formType === "pc_login" || formType === "pc_register") {
+                if (formType === "pc_login") {
                     window.location.href = "/public/";
-                } else if (formType === "go_login" || formType === "go_register") {
+                } else if (formType === "pc_register") {
+                    window.location.href = "/login/";
+                } else if (formType === "go_login") {
                     window.location.href = "/go-dashboard/";
                 } else {
                     window.location.href = "/";
@@ -233,6 +202,10 @@ document.getElementById("authForm").addEventListener("submit", async function(e)
             let errorMsg = "Invalid credentials.";
             if (data.error) {
                 errorMsg = data.error;
+            } else if (data.password) {
+                errorMsg = Array.isArray(data.password) ? data.password[0] : data.password;
+            } else if (data.non_field_errors) {
+                errorMsg = Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors;
             } else if (data.govt_id) {
                 errorMsg = Array.isArray(data.govt_id) ? data.govt_id[0] : data.govt_id;
             } else if (data.email) {

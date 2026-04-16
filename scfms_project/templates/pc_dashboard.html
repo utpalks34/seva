@@ -82,6 +82,12 @@
             align-items: center;
         }
 
+        .nav-auth-links {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
         .nav-link {
             color: var(--text-secondary);
             text-decoration: none;
@@ -108,6 +114,30 @@
 
         .nav-link:hover::after {
             width: 100%;
+        }
+
+        .auth-link-btn {
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.65rem 1rem;
+            border-radius: 999px;
+            transition: all 0.3s ease;
+        }
+
+        .auth-link-btn.login {
+            color: var(--primary);
+            border: 1px solid rgba(15, 118, 110, 0.25);
+            background: rgba(15, 118, 110, 0.08);
+        }
+
+        .auth-link-btn.register {
+            color: white;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            box-shadow: 0 8px 24px rgba(15, 118, 110, 0.18);
+        }
+
+        .auth-link-btn:hover {
+            transform: translateY(-1px);
         }
 
         .notification-btn {
@@ -191,6 +221,10 @@
 
         .profile-dropdown {
             position: relative;
+        }
+
+        .is-hidden {
+            display: none !important;
         }
 
         .profile-btn {
@@ -284,25 +318,235 @@
             padding: 3rem 2rem;
         }
 
-        /* Hero Section */
+        /* ── NITI-Style Hero ─────────────────────────────────────── */
         .hero {
-            margin-bottom: 3rem;
-            animation: slideInDown 0.6s ease-out;
+            position: relative;
+            background: linear-gradient(135deg, #0c1f4a 0%, #122360 40%, #1a3a8f 70%, #0d2b6b 100%);
+            margin: -3rem -2rem 3rem -2rem;
+            padding: 0;
+            overflow: hidden;
+            min-height: 340px;
+            display: flex;
+            align-items: stretch;
+        }
+
+        /* Decorative background shapes (NITI-style) */
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -80px; right: -80px;
+            width: 420px; height: 420px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -100px; right: 60px;
+            width: 300px; height: 300px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .hero-inner {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 0;
+            width: 100%;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Left content pane */
+        .hero-left {
+            padding: 52px 48px 48px 48px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Saffron accent bar (NITI signature element) */
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+        .hero-eyebrow-bar {
+            width: 36px; height: 4px;
+            background: #FF9933;
+            border-radius: 2px;
+        }
+        .hero-eyebrow-text {
+            font-size: 12px;
+            font-weight: 700;
+            color: #FF9933;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
 
         .hero h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-size: 2.6rem;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.18;
+            margin-bottom: 14px;
+            letter-spacing: -0.5px;
+            -webkit-text-fill-color: unset;
+            background: none;
+        }
+        .hero h1 span.accent {
+            color: #FF9933;
         }
 
-        .hero p {
-            font-size: 1.1rem;
+        .hero-motto {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.65);
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+
+        .hero p.sub {
+            font-size: 15px;
+            color: rgba(255,255,255,0.7);
+            line-height: 1.7;
+            margin-bottom: 28px;
+            max-width: 520px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .guest-auth-card {
+            margin-top: 1.5rem;
+            padding: 1rem 1.25rem;
+            border-radius: 1rem;
+            background: rgba(255,255,255,0.82);
+            border: 1px solid rgba(15, 118, 110, 0.12);
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+            max-width: 560px;
+        }
+        .guest-auth-card p {
             color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+        .guest-auth-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .hero-btn-primary {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: #FF9933;
+            color: #fff; text-decoration: none;
+            padding: 12px 28px;
+            border-radius: 6px;
+            font-size: 14.5px; font-weight: 700;
+            border: none; cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 18px rgba(255,153,51,0.4);
+        }
+        .hero-btn-primary:hover {
+            background: #e6891e;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(255,153,51,0.5);
+        }
+        .hero-btn-secondary {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.12);
+            color: #fff; text-decoration: none;
+            padding: 12px 28px;
+            border-radius: 6px;
+            font-size: 14.5px; font-weight: 600;
+            border: 1.5px solid rgba(255,255,255,0.25);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            backdrop-filter: blur(8px);
+        }
+        .hero-btn-secondary:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.45);
+            transform: translateY(-2px);
+        }
+
+        /* Right live-stats panel */
+        .hero-right {
+            background: rgba(0,0,0,0.25);
+            border-left: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 20px;
+            position: relative;
+        }
+        .hero-right::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 3px; height: 100%;
+            background: linear-gradient(to bottom, #FF9933, transparent, #138808);
+        }
+        .hero-stat-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.55);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 4px;
+        }
+        .hero-stat-value {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+        }
+        .hero-stat-value.orange { color: #FF9933; }
+        .hero-stat-value.green  { color: #4ade80; }
+        .hero-stat-value.yellow { color: #fbbf24; }
+        .hero-stat-item {
+            padding-bottom: 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .hero-stat-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .hero-stat-badge {
+            display: inline-block;
+            margin-top: 6px;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .badge-orange { background: rgba(255,153,51,0.2); color: #FF9933; }
+        .badge-green  { background: rgba(74,222,128,0.15); color: #4ade80; }
+        .badge-yellow { background: rgba(251,191,36,0.15); color: #fbbf24; }
+
+        /* Geometric accent (NITI diagonal band) */
+        .hero-diagonal {
+            position: absolute;
+            top: 0; right: 340px;
+            width: 60px; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,153,51,0.06));
+            pointer-events: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .hero-inner { grid-template-columns: 1fr; }
+            .hero-right { border-left: none; border-top: 1px solid rgba(255,255,255,0.1);
+                          flex-direction: row; flex-wrap: wrap; gap: 16px; padding: 24px 28px; }
+            .hero-stat-item { border-bottom: none; flex: 1; min-width: 100px; padding-bottom: 0; }
+            .hero-left { padding: 36px 28px 24px; }
+            .hero h1 { font-size: 2rem; }
+        }
+        @media (max-width: 600px) {
+            .hero { margin: -3rem -1rem 2rem -1rem; }
+            .hero h1 { font-size: 1.65rem; }
+            .hero-actions { flex-direction: column; }
+            .hero-right { display: none; }
         }
 
         /* Stats Grid */
@@ -662,8 +906,12 @@
             <div class="nav-links">
                 <a href="/public/" class="nav-link">Dashboard</a>
                 <a href="/report/" class="nav-link">File Complaint</a>
+                <div class="nav-auth-links is-hidden" id="guestAuthLinks">
+                    <a href="/login/" class="auth-link-btn login">Citizen Login</a>
+                    <a href="/register/" class="auth-link-btn register">Register</a>
+                </div>
 
-                <div style="position:relative;">
+                <div style="position:relative;" id="citizenNotificationWrap">
                     <button class="notification-btn" id="notifBellBtn" title="Notifications">
                         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -682,7 +930,7 @@
                     </div>
                 </div>
 
-                <div class="profile-dropdown">
+                <div class="profile-dropdown" id="citizenProfileMenu">
                     <button class="profile-btn">
                         <div class="profile-avatar">👤</div>
                         <span>Profile</span>
@@ -714,10 +962,57 @@
 
     <!-- Main Content -->
     <main>
-        <!-- Hero Section -->
+        <!-- ── NITI-Style Hero ─────────────────────────── -->
         <section class="hero">
-            <h1>Welcome Back! 👋</h1>
-            <p>Track, manage, and monitor your civic complaints in one place</p>
+            <div class="hero-diagonal"></div>
+            <div class="hero-inner">
+
+                <!-- Left: Main Content -->
+                <div class="hero-left">
+                    <div class="hero-eyebrow">
+                        <div class="hero-eyebrow-bar"></div>
+                        <span class="hero-eyebrow-text">🏛️ Smart City Feedback Management System</span>
+                    </div>
+                    <h1>Welcome Back, <span class="accent">Citizen</span> 👋</h1>
+                    <div class="hero-motto">"सेवा परमॊ धर्मः" — Service is the Highest Duty</div>
+                    <p class="sub">Track, manage, and monitor all your civic complaints in real-time. Your voice — from filing to final resolution — every step, fully visible.</p>
+                    <div class="guest-auth-card is-hidden" id="guestHeroAuth">
+                        <p>Log in with your citizen email to track complaints, or register to file a new complaint.</p>
+                        <div class="guest-auth-actions">
+                            <a href="/login/" class="auth-link-btn login">Citizen Login</a>
+                            <a href="/register/" class="auth-link-btn register">Register</a>
+                        </div>
+                    </div>
+                    <div class="hero-actions">
+                        <a href="/report/" class="hero-btn-primary">
+                            ✏️ File New Complaint
+                        </a>
+                        <a href="/public/" class="hero-btn-secondary">
+                            📊 View Public Dashboard
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right: Live Stats -->
+                <div class="hero-right">
+                    <div class="hero-stat-item">
+                        <div class="hero-stat-label">📋 Total Complaints</div>
+                        <div class="hero-stat-value orange" id="hero-total">—</div>
+                        <span class="hero-stat-badge badge-orange">All Time</span>
+                    </div>
+                    <div class="hero-stat-item">
+                        <div class="hero-stat-label">✅ Resolved</div>
+                        <div class="hero-stat-value green" id="hero-resolved">—</div>
+                        <span class="hero-stat-badge badge-green">Successfully Closed</span>
+                    </div>
+                    <div class="hero-stat-item">
+                        <div class="hero-stat-label">⏳ Pending</div>
+                        <div class="hero-stat-value yellow" id="hero-pending">—</div>
+                        <span class="hero-stat-badge badge-yellow">Awaiting Action</span>
+                    </div>
+                </div>
+
+            </div>
         </section>
 
         <!-- Stats Grid -->
@@ -822,9 +1117,38 @@
         //              🚨 WEBSOCKET REAL-TIME NOTIFICATIONS
         // ============================================================
 
+        function getCitizenToken() {
+            return localStorage.getItem('auth_token') || localStorage.getItem('citizen_auth_token');
+        }
+
+        function clearCitizenAuth() {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('citizen_auth_token');
+        }
+
+        function toggleCitizenAuthUi(isAuthenticated) {
+            const guestAuthLinks = document.getElementById('guestAuthLinks');
+            const guestHeroAuth = document.getElementById('guestHeroAuth');
+            const notificationWrap = document.getElementById('citizenNotificationWrap');
+            const profileMenu = document.getElementById('citizenProfileMenu');
+
+            if (guestAuthLinks) {
+                guestAuthLinks.classList.toggle('is-hidden', isAuthenticated);
+            }
+            if (guestHeroAuth) {
+                guestHeroAuth.classList.toggle('is-hidden', isAuthenticated);
+            }
+            if (notificationWrap) {
+                notificationWrap.classList.toggle('is-hidden', !isAuthenticated);
+            }
+            if (profileMenu) {
+                profileMenu.classList.toggle('is-hidden', !isAuthenticated);
+            }
+        }
+
         function initWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const token = localStorage.getItem('auth_token') || localStorage.getItem('citizen_auth_token');
+            const token = getCitizenToken();
             const wsUrl = `${protocol}//${window.location.host}/ws/notifications/?token=${token}`;
 
             const ws = new WebSocket(wsUrl);
@@ -892,7 +1216,7 @@
 
         // Load complaints
         async function loadComplaints() {
-            const token = localStorage.getItem("auth_token");
+            const token = getCitizenToken();
             if (!token) {
                 window.location.href = '/login/';
                 return;
@@ -902,6 +1226,12 @@
                 const res = await fetch("/api/complaints/", {
                     headers: { "Authorization": `Token ${token}` }
                 });
+
+                if (res.status === 401 || res.status === 403) {
+                    clearCitizenAuth();
+                    window.location.href = '/login/';
+                    return;
+                }
 
                 if (!res.ok) throw new Error('Failed to load complaints');
 
@@ -965,6 +1295,13 @@
                 document.getElementById("total-count").textContent = complaints.length;
                 document.getElementById("pending-count").textContent = pending;
                 document.getElementById("resolved-count").textContent = resolved;
+                // Mirror values into the hero panel
+                const htEl = document.getElementById("hero-total");
+                const hpEl = document.getElementById("hero-pending");
+                const hrEl = document.getElementById("hero-resolved");
+                if (htEl) htEl.textContent = complaints.length;
+                if (hpEl) hpEl.textContent = pending;
+                if (hrEl) hrEl.textContent = resolved;
             } catch (error) {
                 console.error('Error loading complaints:', error);
                 document.getElementById("complaint-list").innerHTML = `
@@ -982,12 +1319,17 @@
         let _notifCache = [];
 
         async function fetchNotifications() {
-            const token = localStorage.getItem('auth_token');
+            const token = getCitizenToken();
             if (!token) return;
             try {
                 const res = await fetch('/api/notifications/', {
                     headers: { 'Authorization': `Token ${token}` }
                 });
+                if (res.status === 401 || res.status === 403) {
+                    clearCitizenAuth();
+                    window.location.href = '/login/';
+                    return;
+                }
                 if (!res.ok) return;
                 const data = await res.json();
                 _notifCache = Array.isArray(data) ? data : (data.results || []);
@@ -1018,18 +1360,31 @@
 
             list.innerHTML = _notifCache.slice(0, 20).map(n => {
                 const time = n.created_at ? new Date(n.created_at).toLocaleString('en-IN', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+                const proofHtml = n.resolution_image_url
+                    ? `<div style="margin-top:8px;">
+                           <div style="font-size:.7rem;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">📸 Resolution Proof</div>
+                           <img src="${n.resolution_image_url}" alt="Resolution proof"
+                                style="width:100%;max-height:180px;object-fit:cover;border-radius:8px;border:2px solid #a7f3d0;cursor:pointer;"
+                                onclick="window.open('${n.resolution_image_url}','_blank')"
+                                title="Click to open full size">
+                           <div style="font-size:.7rem;color:#64748b;margin-top:3px;">Click image to view full size</div>
+                       </div>`
+                    : '';
                 return `<div class="notif-item ${n.is_read ? '' : 'unread'}">
                     <p>${n.message}</p>
+                    ${proofHtml}
                     <div class="notif-time">${time}</div>
                 </div>`;
             }).join('');
         }
 
-        function addLiveNotification(message) {
+        function addLiveNotification(notification) {
             _notifCache.unshift({
-                message: message,
+                message: notification.message,
                 is_read: false,
-                created_at: new Date().toISOString()
+                created_at: notification.created_at || new Date().toISOString(),
+                complaint_id: notification.complaint_id || null,
+                resolution_image_url: notification.resolution_image_url || null
             });
             renderNotifications();
         }
@@ -1089,7 +1444,12 @@
                 console.log('WS message:', data);
                 if (data.type === 'notification') {
                     showNotificationToast(data.message);
-                    addLiveNotification(data.message);
+                    addLiveNotification({
+                        message: data.message,
+                        created_at: data.timestamp,
+                        complaint_id: data.complaint_id,
+                        resolution_image_url: data.resolution_image_url
+                    });
                     loadComplaints(); // refresh complaint statuses
                 }
             };
@@ -1101,20 +1461,29 @@
         }
 
         // ─── Auto-refresh complaints every 30s ──────────────────────
-        setInterval(() => { loadComplaints(); }, 30000);
 
         // Logout functionality
         document.getElementById('logoutBtn').addEventListener('click', function () {
             localStorage.removeItem('auth_token');
+            localStorage.removeItem('citizen_auth_token');
             localStorage.removeItem('go_auth_token');
             window.location.href = '/login/';
         });
 
         // Initialize on page load
         window.addEventListener('DOMContentLoaded', () => {
+            const token = getCitizenToken();
+            toggleCitizenAuthUi(!!token);
+
+            if (!token) {
+                window.location.href = '/login/';
+                return;
+            }
+
             initWebSocket();
             loadComplaints();
             fetchNotifications();
+            setInterval(() => { loadComplaints(); }, 30000);
         });
 
         // Also add some CSS animations
@@ -1649,4 +2018,4 @@
 </html>
 
 {% endblock %}
-
+

@@ -22,7 +22,7 @@ class UserAdmin(admin.ModelAdmin):
     )
     
     def role_badge(self, obj):
-        colors = {'PC': '#0066cc', 'GO': '#ff6600'}
+        colors = {'PC': '#0066cc', 'GO': '#ff6600', 'AD': '#7c3aed'}
         color = colors.get(obj.role, '#999')
         return format_html(
             '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 3px;">{}</span>',

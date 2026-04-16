@@ -1,11 +1,29 @@
 # complaints/serializers.py
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+
 from .models import Complaint, Notification, GovernmentWhitelist, Department, DepartmentAssignment
 
 User = get_user_model()
 
-class PublicCitizenRegistrationSerializer(serializers.ModelSerializer):
+
+class StrongPasswordMixin:
+    def validate_password(self, value):
+        validate_password(value)
+        if (
+            not any(ch.isupper() for ch in value)
+            or not any(ch.islower() for ch in value)
+            or not any(ch.isdigit() for ch in value)
+            or not any(not ch.isalnum() for ch in value)
+        ):
+            raise serializers.ValidationError(
+                "Password must include uppercase, lowercase, number, and special character."
+            )
+        return value
+
+
+class PublicCitizenRegistrationSerializer(StrongPasswordMixin, serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
     class Meta:
@@ -20,7 +38,8 @@ class PublicCitizenRegistrationSerializer(serializers.ModelSerializer):
             password=validated_data['password'],
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
-            role='PC'
+            role='PC',
+            is_verified=False,
         )
         return user
 
@@ -41,6 +60,7 @@ class ComplaintListSerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField()
     category_display = serializers.CharField(source='get_category_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    resolution_image_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Complaint
@@ -48,51 +68,103 @@ class ComplaintListSerializer(serializers.ModelSerializer):
             'id', 'title', 'description', 'image',
             'latitude', 'longitude', 'category', 'category_display',
             'status', 'status_display', 'severity_score',
-            'user_email', 'user_name', 'created_at'
+            'user_email', 'user_name', 'created_at', 'resolved_at',
+            'resolution_image_url'
         ]
         read_only_fields = ['id', 'created_at']
     
     def get_user_name(self, obj):
         return obj.user.get_full_name() or obj.user.email
 
+    def get_resolution_image_url(self, obj):
+        if obj.resolution_image:
+            request = self.context.get('request')
+            url = obj.resolution_image.url
+            return request.build_absolute_uri(url) if request else url
+        return None
+
 
 class NotificationSerializer(serializers.ModelSerializer):
     complaint_title = serializers.ReadOnlyField(source='complaint.title')
+    complaint_id = serializers.ReadOnlyField(source='complaint.id')
+    resolution_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Notification
-        fields = ['id', 'message', 'is_read', 'created_at', 'complaint_title']
+        fields = ['id', 'message', 'is_read', 'created_at', 'complaint_title', 'complaint_id', 'resolution_image_url']
+
+    def get_resolution_image_url(self, obj):
+        complaint = obj.complaint
+        if complaint and complaint.resolution_image:
+            request = self.context.get('request')
+            url = complaint.resolution_image.url
+            return request.build_absolute_uri(url) if request else url
+        return None
 
 
 class GORegistrationSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
-    govt_id = serializers.CharField(required=True)
-
     class Meta:
         model = User
-        fields = ('id', 'email', 'password', 'govt_id', 'first_name', 'last_name')
-        extra_kwargs = {'password': {'write_only': True}}
+        fields = ('id', 'email', 'govt_id', 'first_name', 'last_name')
 
-    def validate_govt_id(self, value):
-        if not GovernmentWhitelist.objects.filter(gov_id=value, is_used=False).exists():
-            raise serializers.ValidationError("Invalid Government ID or ID already in use.")
-        if User.objects.filter(govt_id=value).exists():
-            raise serializers.ValidationError("This Government ID is already registered.")
+    def validate(self, attrs):
+        raise serializers.ValidationError(
+            "Government self-registration is disabled. Contact an administrator."
+        )
+
+
+class GovernmentInviteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'email', 'first_name', 'last_name')
+
+    def validate_email(self, value):
+        value = value.lower().strip()
+        if not value.endswith('@gov.in'):
+            raise serializers.ValidationError("Government users must use an official @gov.in email.")
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
         return value
 
     def create(self, validated_data):
-        user = User.objects.create_user(
+        request = self.context['request']
+        return User.objects.create_user(
             email=validated_data['email'],
-            password=validated_data['password'],
+            password=None,
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
             role='GO',
-            is_active=True,
-            is_verified=True,
-            govt_id=validated_data['govt_id']
+            is_active=False,
+            is_verified=False,
+            invited_by=request.user,
         )
-        GovernmentWhitelist.objects.filter(gov_id=validated_data['govt_id']).update(is_used=True)
-        return user
+
+
+class GovernmentActivationSerializer(StrongPasswordMixin, serializers.Serializer):
+    token = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+
+
+class OTPVerificationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+
+
+class UserAdminSerializer(serializers.ModelSerializer):
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'id', 'email', 'first_name', 'last_name', 'role', 'role_display',
+            'is_active', 'is_verified', 'otp_enabled', 'date_joined'
+        )
+
+
+class UserStatusUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('is_active', 'otp_enabled')
 
 
 # ============================================================

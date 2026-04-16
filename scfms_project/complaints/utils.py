@@ -18,6 +18,7 @@ def create_notification(user, message, complaint=None):
     # 2. Send the message via WebSocket (Real-Time Push)
     channel_layer = get_channel_layer()
     user_group_name = f'user_{user.id}'
+    resolution_image_url = complaint.resolution_image.url if complaint and complaint.resolution_image else None
     
     # Use async_to_sync because this utility is called from a synchronous DRF view
     async_to_sync(channel_layer.group_send)(
@@ -26,6 +27,8 @@ def create_notification(user, message, complaint=None):
             'type': 'send_notification', # Maps to the consumer method name
             'message': message,
             'timestamp': timezone.now().isoformat(),
+            'complaint_id': complaint.id if complaint else None,
+            'resolution_image_url': resolution_image_url,
         }
     )
 

@@ -23,11 +23,19 @@ from complaints.views import (
     ComplaintViewSet,
     PCRedistrationView,
     PCLoginView,
+    VerifyCitizenEmailView,
+    RefreshTokenView,
     GOLoginView,
     GOComplaintViewSet,
     NotificationListView,
     AnalyticsAPIView,
     GORegistrationView,
+    GovernmentActivationInfoView,
+    GovernmentSetPasswordView,
+    VerifyOTPView,
+    AdminGovernmentUserCreateView,
+    AdminUserListView,
+    AdminUserDetailView,
     
     # Department Routing Views
     DepartmentListView,
@@ -89,14 +97,24 @@ urlpatterns = [
     # --- PUBLIC API ROUTES ---
     path('api/auth/register/', PCRedistrationView.as_view(), name='pc-register-api'),
     path('api/auth/login/', PCLoginView.as_view(), name='pc-login-api'),
+    path('api/auth/verify-email/', VerifyCitizenEmailView.as_view(), name='pc-verify-email-api'),
+    path('api/auth/refresh/', RefreshTokenView.as_view(), name='auth-refresh-api'),
+    path('api/auth/otp/verify/', VerifyOTPView.as_view(), name='auth-otp-verify-api'),
     path('api/notifications/', NotificationListView.as_view(), name='pc-notifications'),
     path('api/', include(router.urls)),
 
     # --- GOVERNMENT API ROUTES ---
     path('api/govt/login/', GOLoginView.as_view(), name='go-login-api'),
     path('api/govt/register/', GORegistrationView.as_view(), name='go-register-api'),
+    path('api/govt/activate/', GovernmentActivationInfoView.as_view(), name='go-activate-info-api'),
+    path('api/govt/set-password/', GovernmentSetPasswordView.as_view(), name='go-set-password-api'),
     path('api/govt/analytics/', AnalyticsAPIView.as_view(), name='govt-analytics'),
     path('api/govt/', include(govt_router.urls)),
+
+    # --- ADMIN USER MANAGEMENT ---
+    path('api/admin/users/', AdminUserListView.as_view(), name='admin-user-list'),
+    path('api/admin/users/<int:pk>/', AdminUserDetailView.as_view(), name='admin-user-detail'),
+    path('api/admin/government-users/', AdminGovernmentUserCreateView.as_view(), name='admin-go-user-create'),
 
     # --- AI Analysis Endpoint ---
     path("api/ai/analyze/", AIAnalyzeView.as_view(), name="ai-analyze"),

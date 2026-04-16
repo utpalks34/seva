@@ -14,15 +14,19 @@ class UserManager(BaseUserManager):
 
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)   # no username here
-        user.set_password(password)
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
         user.save(using=self._db)
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
-
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
-        extra_fields.setdefault("role", "GO")  # admin is not citizen
+        extra_fields.setdefault("is_active", True)
+        extra_fields.setdefault("is_verified", True)
+        extra_fields.setdefault("role", "AD")
 
         return self.create_user(email, password, **extra_fields)
 
@@ -36,6 +40,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
 
     ROLE_CHOICES = (
+        ('AD', 'Administrator'),
         ('PC', 'Public Citizen'),
         ('GO', 'Government Official'),
     )
@@ -43,6 +48,15 @@ class User(AbstractUser):
 
     govt_id = models.CharField(max_length=50, unique=True, null=True, blank=True)
     is_verified = models.BooleanField(default=False)
+    token_version = models.PositiveIntegerField(default=0)
+    invited_by = models.ForeignKey(
+        'self', null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='invited_users'
+    )
+    otp_enabled = models.BooleanField(default=False)
+    otp_code_hash = models.CharField(max_length=128, blank=True)
+    otp_expires_at = models.DateTimeField(null=True, blank=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []   # no username required
@@ -87,6 +101,8 @@ class Complaint(models.Model):
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, default='P')
 
     severity_score = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    resolution_image = models.ImageField(upload_to='resolution_proofs/', null=True, blank=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
 
     # Duplicate detection fields
     is_duplicate = models.BooleanField(default=False)

@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect
 from django.conf import settings 
 from django.db.models import Count, Avg, F
-from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 
 import os
 import google.generativeai as genai
@@ -10,12 +12,12 @@ import google.generativeai as genai
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.utils import timezone
+from django.core.files.uploadedfile import UploadedFile
 
 
 # DRF Imports
 from rest_framework import generics, viewsets, status, mixins
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny # Corrected import line
 
@@ -25,14 +27,84 @@ from .serializers import (
     PublicCitizenRegistrationSerializer, 
     ComplaintRegistrationSerializer, 
     NotificationSerializer,
-    GORegistrationSerializer
+    GORegistrationSerializer,
+    GovernmentInviteSerializer,
+    GovernmentActivationSerializer,
+    OTPVerificationSerializer,
+    UserAdminSerializer,
+    UserStatusUpdateSerializer,
 )
-from .permissions import IsPublicCitizen, IsGovernmentOfficial
+from .permissions import IsPublicCitizen, IsGovernmentOfficial, IsAdminRole
 from .models import Complaint, Notification # Removed redundant import (GovernmentWhitelist is implicitly used in GORegistrationSerializer)
 from .utils import create_notification, broadcast_complaint_to_gos, broadcast_complaint_update, broadcast_dashboard_metrics
 from .ai_service import classify_image_category, generate_description, calculate_severity_score 
+from .auth_utils import (
+    BadSignature,
+    SignatureExpired,
+    clear_user_otp,
+    create_activation_token,
+    create_email_verification_token,
+    create_jwt_pair,
+    create_otp_code,
+    decode_jwt_token,
+    read_activation_token,
+    read_email_verification_token,
+    store_otp_on_user,
+    verify_user_otp,
+)
+from .throttling import LoginRateThrottle
 
 User = get_user_model()
+
+
+def _build_absolute_url(path: str) -> str:
+    return f"{settings.SITE_URL.rstrip('/')}{path}"
+
+
+def _send_verification_email(user):
+    token = create_email_verification_token(user)
+    verify_url = _build_absolute_url(f"/api/auth/verify-email/?token={token}")
+    send_mail(
+        subject="Verify your SCFMS account",
+        message=(
+            "Welcome to SCFMS.\n\n"
+            f"Verify your email here:\n{verify_url}\n\n"
+            "This verification link expires in 24 hours."
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+
+
+def _send_activation_email(user):
+    token = create_activation_token(user)
+    activation_url = _build_absolute_url(f"/api/govt/activate/?token={token}")
+    send_mail(
+        subject="Activate your SCFMS government account",
+        message=(
+            "An SCFMS administrator created your government portal account.\n\n"
+            f"Activation link:\n{activation_url}\n\n"
+            "Use that token with the password setup endpoint. The link expires in 48 hours."
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+
+
+def _issue_login_response(user):
+    tokens = create_jwt_pair(user)
+    return {
+        "token": tokens["access"],
+        "access": tokens["access"],
+        "refresh": tokens["refresh"],
+        "go_token": tokens["access"],
+        "user_id": user.pk,
+        "email": user.email,
+        "govt_id": user.govt_id,
+        "role": user.role,
+    }
 
 # --- HTML TEMPLATE VIEWS (UI) ---
 
@@ -63,11 +135,14 @@ def pc_dashboard_view(request):
 
 def go_login_view(request):
     """Government Official Login Form"""
-    return render(request, 'auth_form.html', {'form_type': 'go_login'})
+    return render(request, 'auth_form.html', {
+        'form_type': 'go_login',
+        'govt_notice': 'Government accounts are created by an administrator. Use your official email and the password you set from the activation link.',
+    })
 
 def go_register_view_html(request):
-    """Government Official Registration Form"""
-    return render(request, 'auth_form.html', {'form_type': 'go_register'})
+    """Government self-registration is disabled; send users to login info."""
+    return redirect('go-login-html')
 
 
 def complaint_form_view(request):
@@ -99,18 +174,14 @@ class PCRedistrationView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        # create user using serializer
         user = serializer.save()
-
-        # Auto-create auth token
-        token, _ = Token.objects.get_or_create(user=user)
+        _send_verification_email(user)
 
         return Response({
-            "message": "Registration successful",
-            "token": token.key,
+            "message": "Registration successful. Please verify your email before logging in.",
             "user_id": user.id,
             "email": user.email,
+            "email_verification_required": True,
         }, status=status.HTTP_201_CREATED)
 
 
@@ -120,16 +191,16 @@ class PCLoginView(APIView):
     POST /api/auth/login/ - Public Citizen Login API
     """
     permission_classes = (AllowAny,)
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request, format=None):
         try:
-            email = request.data.get("email")
+            email = (request.data.get("email") or "").strip().lower()
             password = request.data.get("password")
 
             if not email or not password:
                 return Response({'error': 'Email and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Find user by email and ensure role PC
             try:
                 user = User.objects.get(email=email, role='PC')
             except User.DoesNotExist:
@@ -138,10 +209,34 @@ class PCLoginView(APIView):
             if not user.check_password(password):
                 return Response({'error': 'Invalid Credentials.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            token, _ = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key, 'user_id': user.pk, 'email': user.email}, status=status.HTTP_200_OK)
+            if not user.is_verified:
+                return Response(
+                    {'error': 'Please verify your email before logging in.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            return Response(_issue_login_response(user), status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class VerifyCitizenEmailView(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request):
+        token = request.query_params.get("token")
+        if not token:
+            return Response({"error": "Verification token is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user_id, email = read_email_verification_token(token)
+            user = User.objects.get(pk=user_id, email=email, role='PC')
+            user.is_verified = True
+            user.save(update_fields=["is_verified"])
+            return Response({"message": "Email verified successfully."}, status=status.HTTP_200_OK)
+        except (BadSignature, SignatureExpired, User.DoesNotExist):
+            return Response({"error": "Invalid or expired verification link."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -219,22 +314,17 @@ class NotificationListView(generics.ListAPIView):
 
 
 # --- 4. GOVERNMENT OFFICIAL AUTH & API VIEWS ---
-
-class GORegistrationView(generics.CreateAPIView):
-    """ POST /api/govt/register/ - GO Registration (Creates inactive account). """
-    queryset = User.objects.all()
-    serializer_class = GORegistrationSerializer
-    permission_classes = (AllowAny,)
-
-
-class GOLoginView(APIView):
+# LegacyGOLoginView is kept only as historical reference and is not wired to URLs.
+class LegacyGOLoginView(APIView):
     """ POST /api/govt/login/ - Government Official Login API """
     permission_classes = (AllowAny,)
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request, format=None):
-        email = request.data.get("email")
+        email = (request.data.get("email") or "").strip().lower()
         password = request.data.get("password")
         govt_id = request.data.get("govt_id")
+        otp = request.data.get("otp")
         
         print(f"🔐 GO Login attempt: email={email}, govt_id={govt_id}")
         
@@ -285,6 +375,185 @@ class GOLoginView(APIView):
         }, status=status.HTTP_200_OK)
     
 
+@method_decorator(csrf_exempt, name='dispatch')
+class RefreshTokenView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        raw_refresh = request.data.get("refresh")
+        if not raw_refresh:
+            return Response({"error": "Refresh token is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            payload = decode_jwt_token(raw_refresh)
+            if payload.get("type") != "refresh":
+                return Response({"error": "Invalid refresh token."}, status=status.HTTP_400_BAD_REQUEST)
+            user = User.objects.get(pk=payload["sub"], is_active=True)
+            if int(payload.get("ver", -1)) != int(getattr(user, "token_version", 0)):
+                return Response({"error": "Refresh token has been revoked."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(_issue_login_response(user), status=status.HTTP_200_OK)
+        except Exception as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class GovernmentActivationInfoView(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request):
+        token = request.query_params.get("token")
+        if not token:
+            return Response({"error": "Activation token is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user_id, email = read_activation_token(token)
+            user = User.objects.get(pk=user_id, email=email, role='GO')
+            return Response({
+                "message": "Activation token is valid.",
+                "email": user.email,
+                "name": user.get_full_name() or user.email,
+            }, status=status.HTTP_200_OK)
+        except (BadSignature, SignatureExpired, User.DoesNotExist):
+            return Response({"error": "Invalid or expired activation link."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class GovernmentSetPasswordView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        serializer = GovernmentActivationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            user_id, email = read_activation_token(serializer.validated_data["token"])
+            user = User.objects.get(pk=user_id, email=email, role='GO')
+            user.set_password(serializer.validated_data["password"])
+            user.is_active = True
+            user.is_verified = True
+            user.token_version += 1
+            user.save(update_fields=["password", "is_active", "is_verified", "token_version"])
+            return Response({"message": "Government account activated successfully."}, status=status.HTTP_200_OK)
+        except (BadSignature, SignatureExpired, User.DoesNotExist):
+            return Response({"error": "Invalid or expired activation link."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class VerifyOTPView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        serializer = OTPVerificationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = get_object_or_404(User, email=serializer.validated_data["email"])
+
+        if not verify_user_otp(user, serializer.validated_data["otp"]):
+            return Response({"error": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
+
+        clear_user_otp(user)
+        return Response(_issue_login_response(user), status=status.HTTP_200_OK)
+
+
+class AdminGovernmentUserCreateView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = GovernmentInviteSerializer
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        _send_activation_email(user)
+        return Response({
+            "message": "Government user created and activation email sent.",
+            "user": UserAdminSerializer(user).data,
+        }, status=status.HTTP_201_CREATED)
+
+
+class AdminUserListView(generics.ListAPIView):
+    queryset = User.objects.all().order_by("-date_joined")
+    serializer_class = UserAdminSerializer
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+
+class AdminUserDetailView(generics.RetrieveUpdateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserStatusUpdateSerializer
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+
+class GORegistrationView(generics.CreateAPIView):
+    """Public GO registration is intentionally disabled."""
+    queryset = User.objects.all()
+    serializer_class = GORegistrationSerializer
+    permission_classes = (AllowAny,)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(
+            {'error': 'Government self-registration is disabled. Contact an administrator.'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+
+class GOLoginView(APIView):
+    """ POST /api/govt/login/ - Government Official Login API """
+    permission_classes = (AllowAny,)
+    throttle_classes = [LoginRateThrottle]
+
+    def post(self, request, format=None):
+        email = (request.data.get("email") or "").strip().lower()
+        password = request.data.get("password")
+        govt_id = request.data.get("govt_id")
+        otp = request.data.get("otp")
+
+        try:
+            if email:
+                user = User.objects.get(email=email)
+            elif govt_id:
+                user = User.objects.get(govt_id=govt_id)
+            else:
+                return Response({'error': 'Email or Government ID required.'}, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({'error': 'Invalid credentials or user not found.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if user.role not in {'GO', 'AD'}:
+            return Response({'error': 'This account is not a Government or Admin account.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not user.is_active:
+            return Response({'error': 'Account has not been activated yet.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if not user.check_password(password):
+            return Response({'error': 'Invalid email/password combination.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not user.is_verified:
+            return Response({'error': 'Account verification is pending.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if user.otp_enabled:
+            if not otp:
+                generated_otp = create_otp_code()
+                store_otp_on_user(user, generated_otp)
+                send_mail(
+                    subject="Your SCFMS OTP",
+                    message=f"Your one-time code is {generated_otp}. It expires in 10 minutes.",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+                return Response({
+                    'otp_required': True,
+                    'message': 'OTP sent to your official email.',
+                    'email': user.email,
+                }, status=status.HTTP_202_ACCEPTED)
+
+            if not verify_user_otp(user, str(otp).strip()):
+                return Response({'error': 'Invalid or expired OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+            clear_user_otp(user)
+
+        return Response(_issue_login_response(user), status=status.HTTP_200_OK)
+
+
 class GOComplaintViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet): 
     """ Handles GO list, filter, sort (by severity), and status update. """
     queryset = Complaint.objects.all().order_by('-severity_score', '-created_at')
@@ -331,6 +600,16 @@ class GOComplaintViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixin
 
         valid_statuses = [choice[0] for choice in Complaint.STATUS_CHOICES]
         if new_status and new_status in valid_statuses:
+            resolution_image = request.data.get('resolution_image')
+            if new_status == 'R':
+                if not isinstance(resolution_image, UploadedFile):
+                    return Response(
+                        {'error': 'Resolution proof image is required before marking a complaint as resolved.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                instance.resolution_image = resolution_image
+                instance.resolved_at = timezone.now()
+
             instance.status = new_status
             instance.save()
             
@@ -339,7 +618,7 @@ class GOComplaintViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixin
             if new_status == 'I':
                 message = f"Your complaint '{instance.title}' has been **ACCEPTED** and is now in progress."
             elif new_status == 'R':
-                message = f"Your complaint '{instance.title}' has been **RESOLVED** by a Government Official."
+                message = f"Your complaint '{instance.title}' has been **RESOLVED** by a Government Official. Proof photo attached."
             else:
                 message = f"The status of your complaint '{instance.title}' has been updated."
 
@@ -889,6 +1168,7 @@ class TimelineView(APIView):
                     'actor':       assignment.department.department_head_name,
                     'timestamp':   assignment.resolved_at.isoformat(),
                     'color':       '#10b981',
+                    'proof_image_url': request.build_absolute_uri(complaint.resolution_image.url) if complaint.resolution_image else None,
                 })
 
         # Sort all events chronologically

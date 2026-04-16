@@ -834,9 +834,7 @@
         </div>
         <ul class="sidebar-nav">
             <li id="navDashboard" class="active" onclick="showSection('dashboard')">📊 Dashboard</li>
-            <li id="navAnalytics" onclick="showSection('analytics')">📈 Analytics</li>
             <li id="navReports" onclick="showSection('reports')">📄 Reports</li>
-            <li id="navOfficials">👥 Officials</li>
         </ul>
     </div>
 
@@ -939,85 +937,7 @@
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════
-         📊  ADVANCED ANALYTICS PANEL  (Feature #2)
-         ═══════════════════════════════════════════════════ -->
-        <div id="analyticsSection" class="adv-analytics-panel">
 
-            <div class="adv-updated" id="advLastUpdated">Fetching data…</div>
-
-            <!-- KPI Row -->
-            <div class="adv-kpi-grid">
-                <div class="adv-kpi-card">
-                    <div class="adv-kpi-label">📋 Total Complaints</div>
-                    <div class="adv-kpi-value" id="advTotal">—</div>
-                    <div class="adv-kpi-sub">All time</div>
-                </div>
-                <div class="adv-kpi-card green">
-                    <div class="adv-kpi-label">✅ Resolution Rate</div>
-                    <div class="adv-kpi-value" id="advRate">—</div>
-                    <div class="adv-kpi-sub">% of total resolved</div>
-                </div>
-                <div class="adv-kpi-card orange">
-                    <div class="adv-kpi-label">⏱️ Avg Resolution</div>
-                    <div class="adv-kpi-value" id="advAvgDays">—</div>
-                    <div class="adv-kpi-sub">days per complaint</div>
-                </div>
-                <div class="adv-kpi-card red">
-                    <div class="adv-kpi-label">🚨 High Priority</div>
-                    <div class="adv-kpi-value" id="advHighPriority">—</div>
-                    <div class="adv-kpi-sub">Severity ≥ 70</div>
-                </div>
-            </div>
-
-            <!-- Charts Row -->
-            <div class="adv-charts-row">
-                <!-- 30-day Trend -->
-                <div class="adv-chart-card">
-                    <h3>📈 30-Day Complaint Trend</h3>
-                    <canvas id="advTrendChart"></canvas>
-                </div>
-                <!-- Category Doughnut -->
-                <div class="adv-chart-card">
-                    <h3>🗂️ By Category</h3>
-                    <canvas id="advCategoryChart"></canvas>
-                </div>
-                <!-- Status Bar -->
-                <div class="adv-chart-card">
-                    <h3>📊 By Status</h3>
-                    <canvas id="advStatusChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Department Performance -->
-            <div class="adv-chart-card" style="margin-bottom:1.75rem">
-                <h3>🏛️ Department Performance</h3>
-                <div style="overflow-x:auto">
-                    <table class="adv-dept-table" id="advDeptTable">
-                        <thead>
-                            <tr>
-                                <th>Department</th>
-                                <th>Total</th>
-                                <th>Resolved</th>
-                                <th>Resolution Rate</th>
-                                <th>Avg Days</th>
-                            </tr>
-                        </thead>
-                        <tbody id="advDeptBody">
-                            <tr>
-                                <td colspan="5" class="adv-loading">Loading departments…</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Heatmap -->
-            <div class="adv-chart-card" style="margin-bottom:2rem">
-                <h3>🗺️ Complaint Density Heatmap</h3>
-                <div id="advHeatmap"></div>
-            </div>
-        </div>
 
         <!-- ═══════════════════════ REPORTS SECTION ═══════════════════════ -->
         <div id="reportsSection" style="display:none;padding:1.5rem 0;">
@@ -1309,18 +1229,158 @@
         // --- 3. Action Button Generation and Update Handler (Same as before, moved here) ---
         function generateActionButton(id, currentStatus) {
             if (currentStatus === 'P') {
-                return `<button data-id="${id}" data-status="I" class="update-status-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs">Accept</button>`;
+                return `<button data-id="${id}" data-status="I" class="update-status-btn"
+                    style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"
+                    onclick="updateComplaintStatus(${id},'I')">
+                    ✅ Accept
+                </button>`;
             } else if (currentStatus === 'I') {
-                return `<button data-id="${id}" data-status="R" class="update-status-btn bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded text-xs">Resolve</button>`;
+                return `<button data-id="${id}" data-status="R" class="update-status-btn"
+                    style="background:linear-gradient(135deg,#059669,#047857);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;"
+                    onclick="openResolutionProofModal(${id})">
+                    📸 Add Proof & Resolve
+                </button>`;
+            } else if (currentStatus === 'R') {
+                return `<span style="color:#059669;font-size:12px;font-weight:700;display:flex;align-items:center;gap:3px;">🏆 Resolved</span>`;
             } else {
-                return `<span class="text-green-500 text-xs">Closed</span>`;
+                return `<span style="color:#dc2626;font-size:12px;font-weight:700;">❌ Declined</span>`;
+            }
+        }
+
+        // ── Resolution Proof Modal ────────────────────────────────────
+        let _rpComplaintId = null;
+        let _rpFile = null;
+
+        function openResolutionProofModal(complaintId) {
+            _rpComplaintId = complaintId;
+            _rpFile = null;
+            // Reset UI
+            document.getElementById('rpPreview').style.display = 'none';
+            document.getElementById('rpPreview').src = '';
+            const rpWrap = document.getElementById('rpPreviewWrap');
+            if (rpWrap) rpWrap.style.display = 'none';
+            document.getElementById('rpDropZone').style.display = 'flex';
+            document.getElementById('rpFileInput').value = '';
+            document.getElementById('rpMsg').style.display = 'none';
+            document.getElementById('rpMsg').textContent = '';
+            document.getElementById('rpConfirmBtn').disabled = true;
+            document.getElementById('rpConfirmBtn').textContent = '✅ Resolve & Notify Citizen';
+            document.getElementById('rpComplaintNum').textContent = `#${complaintId}`;
+            // Show modal
+            document.getElementById('resolutionProofModal').style.display = 'flex';
+        }
+
+        function closeResolutionProofModal() {
+            document.getElementById('resolutionProofModal').style.display = 'none';
+            _rpComplaintId = null;
+            _rpFile = null;
+        }
+
+        // Drag & Drop handlers
+        function rpOnDragOver(e) {
+            e.preventDefault();
+            document.getElementById('rpDropZone').style.borderColor = '#059669';
+            document.getElementById('rpDropZone').style.background = 'rgba(5,150,105,.06)';
+        }
+        function rpOnDragLeave() {
+            document.getElementById('rpDropZone').style.borderColor = '#cbd5e1';
+            document.getElementById('rpDropZone').style.background = '#f8fafc';
+        }
+        function rpOnDrop(e) {
+            e.preventDefault();
+            rpOnDragLeave();
+            const file = e.dataTransfer.files && e.dataTransfer.files[0];
+            if (file) rpSetFile(file);
+        }
+        function rpOnFileChange(e) {
+            const file = e.target.files && e.target.files[0];
+            if (file) rpSetFile(file);
+        }
+        function rpSetFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showRpMsg('Only image files are accepted.', true);
+                return;
+            }
+            _rpFile = file;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const preview = document.getElementById('rpPreview');
+                preview.src = ev.target.result;
+                preview.style.display = 'block';
+                document.getElementById('rpDropZone').style.display = 'none';
+                const wrap = document.getElementById('rpPreviewWrap');
+                if (wrap) wrap.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+            document.getElementById('rpConfirmBtn').disabled = false;
+            showRpMsg('', false);
+        }
+        function rpClearPreview() {
+            _rpFile = null;
+            document.getElementById('rpPreview').style.display = 'none';
+            document.getElementById('rpPreview').src = '';
+            document.getElementById('rpDropZone').style.display = 'flex';
+            document.getElementById('rpFileInput').value = '';
+            document.getElementById('rpConfirmBtn').disabled = true;
+            const wrap = document.getElementById('rpPreviewWrap');
+            if (wrap) wrap.style.display = 'none';
+        }
+        function showRpMsg(text, isError) {
+            const el = document.getElementById('rpMsg');
+            if (!text) { el.style.display = 'none'; return; }
+            el.textContent = text;
+            el.style.display = 'block';
+            el.style.background = isError ? '#fef2f2' : '#f0fdf4';
+            el.style.color = isError ? '#991b1b' : '#065f46';
+        }
+
+        async function confirmResolveWithProof() {
+            if (!_rpFile || !_rpComplaintId) return;
+            const btn = document.getElementById('rpConfirmBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Uploading...';
+            showRpMsg('Uploading proof and notifying citizen...', false);
+
+            const formData = new FormData();
+            formData.append('status', 'R');
+            formData.append('resolution_image', _rpFile);
+
+            try {
+                const response = await fetch(`/api/govt/complaints/${_rpComplaintId}/`, {
+                    method: 'PATCH',
+                    headers: { 'Authorization': `Token ${GO_AUTH_TOKEN}` },
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    showRpMsg('✅ Complaint resolved! Proof photo sent to citizen.', false);
+                    btn.textContent = '✅ Done!';
+                    setTimeout(async () => {
+                        closeResolutionProofModal();
+                        await fetchAndRenderComplaints();
+                        await fetchAnalytics();
+                        showNotificationToast('✅ Complaint resolved & proof sent to citizen!', 'success');
+                    }, 1200);
+                } else {
+                    const errData = await response.json().catch(() => ({}));
+                    showRpMsg(errData.error || `HTTP ${response.status}: Update failed.`, true);
+                    btn.disabled = false;
+                    btn.textContent = '✅ Resolve & Notify Citizen';
+                }
+            } catch (err) {
+                showRpMsg('Network error. Please try again.', true);
+                btn.disabled = false;
+                btn.textContent = '✅ Resolve & Notify Citizen';
             }
         }
 
         async function updateComplaintStatus(complaintId, newStatus) {
+            if (newStatus === 'R') {
+                // Should go through modal - but this handles any direct calls
+                openResolutionProofModal(complaintId);
+                return;
+            }
             const endpoint = `/api/govt/complaints/${complaintId}/`;
-
-            // Disable all buttons to prevent double-click while updating
             document.querySelectorAll('.update-status-btn').forEach(btn => btn.disabled = true);
 
             try {
@@ -1334,20 +1394,17 @@
                 });
 
                 if (response.ok) {
-                    // Fetch new data to update table, metrics, and map (real-time feel)
                     await fetchAndRenderComplaints();
                     await fetchAnalytics();
-                    alert(`Complaint ${complaintId} status successfully updated to ${newStatus}. Citizen will be notified instantly via WebSocket!`);
+                    showNotificationToast(`✅ Complaint #${complaintId} accepted — citizen notified!`, 'success');
                 } else {
-                    const errorData = await response.json();
-                    alert(`Update failed: ${errorData.error || response.statusText}`);
+                    const errorData = await response.json().catch(() => ({}));
+                    showNotificationToast(`❌ Update failed: ${errorData.error || response.statusText}`, 'error');
                 }
-
             } catch (error) {
                 console.error('Error updating status:', error);
-                alert('Network error during status update.');
+                showNotificationToast('❌ Network error during status update.', 'error');
             } finally {
-                // Re-enable buttons
                 document.querySelectorAll('.update-status-btn').forEach(btn => btn.disabled = false);
             }
         }
@@ -1526,7 +1583,7 @@
                     headers: { 'Authorization': `Token ${token}`, 'Content-Type': 'application/json' },
                 });
 
-                console.log('🔍 fetchAndRenderComplaints token:', token ? token.substring(0,10)+'…' : 'NULL');
+                console.log('🔍 fetchAndRenderComplaints token:', token ? token.substring(0, 10) + '…' : 'NULL');
                 console.log('🔍 API URL:', url, 'Status:', response.status);
 
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -1567,7 +1624,7 @@
                         <td>
                             <div class="complaint-info">
                                 <div class="complaint-title" style="cursor:pointer;color:#1e40af;font-weight:600;" onclick="window.location.href='/go/complaint/${complaint.id}/'">${complaint.title}</div>
-                                <div class="complaint-desc">${complaint.description.substring(0,80)}${complaint.description.length>80?'…':''}</div>
+                                <div class="complaint-desc">${complaint.description.substring(0, 80)}${complaint.description.length > 80 ? '…' : ''}</div>
                                 <div style="font-size:.75rem;color:#64748b;margin-top:2px;">👤 ${complaint.user_name || complaint.user_email || 'Citizen'}</div>
                             </div>
                         </td>
@@ -1605,37 +1662,26 @@
 
 
         // ─── Section toggle ───────────────────────────────────────────
-        let advTrendChart, advCategoryChart, advStatusChart;
-        let advHeatmapInstance;
-        let analyticsLoaded = false;
-
         function showSection(section) {
             const dashEl = document.getElementById('dashboardSection');
-            const advEl = document.getElementById('analyticsSection');
             const rptEl = document.getElementById('reportsSection');
             const navDash = document.getElementById('navDashboard');
-            const navAnaly = document.getElementById('navAnalytics');
             const navRpt = document.getElementById('navReports');
-
             const kpiGrid = document.querySelector('.kpi-grid');
             const chartSec = document.querySelector('.analytics-section');
             const mapCard = document.querySelector('.map-card');
             const filterSec = document.querySelector('.filter-section');
 
-            // Hide everything first
-            [dashEl, advEl, rptEl].forEach(el => { if (el) el.style.display = 'none'; });
-            [navDash, navAnaly, navRpt].forEach(n => { if (n) n.classList.remove('active'); });
+            // Hide all sections
+            [dashEl, rptEl].forEach(el => { if (el) el.style.display = 'none'; });
+            [navDash, navRpt].forEach(n => { if (n) n.classList.remove('active'); });
             [kpiGrid, chartSec, mapCard, filterSec].forEach(el => { if (el) el.style.display = 'none'; });
 
-            if (section === 'analytics') {
-                if (advEl) advEl.style.display = '';
-                if (navAnaly) navAnaly.classList.add('active');
-                if (!analyticsLoaded) { loadAnalytics(); analyticsLoaded = true; }
-            } else if (section === 'reports') {
+            if (section === 'reports') {
                 if (rptEl) rptEl.style.display = '';
                 if (navRpt) navRpt.classList.add('active');
             } else {
-                // dashboard
+                // dashboard (default)
                 if (dashEl) dashEl.style.display = '';
                 if (kpiGrid) kpiGrid.style.display = '';
                 if (chartSec) chartSec.style.display = '';
@@ -1643,192 +1689,6 @@
                 if (filterSec) filterSec.style.display = '';
                 if (navDash) navDash.classList.add('active');
             }
-        }
-
-        // ─── Analytics Loader ─────────────────────────────────────────
-        async function loadAnalytics() {
-            try {
-                document.getElementById('advTotal').textContent = '…';
-                document.getElementById('advRate').textContent = '…';
-                document.getElementById('advAvgDays').textContent = '…';
-                document.getElementById('advHighPriority').textContent = '…';
-
-                const [detailedRes, heatmapRes] = await Promise.all([
-                    fetch('/api/analytics/detailed/', { headers: { 'Authorization': `Token ${GO_AUTH_TOKEN}` } }),
-                    fetch('/api/analytics/heatmap/', { headers: { 'Authorization': `Token ${GO_AUTH_TOKEN}` } }),
-                ]);
-
-                if (!detailedRes.ok) throw new Error(`Detailed API error: ${detailedRes.status}`);
-                if (!heatmapRes.ok) throw new Error(`Heatmap API error: ${heatmapRes.status}`);
-
-                const detailed = await detailedRes.json();
-                const heatmapData = await heatmapRes.json();
-
-                renderAdvKPIs(detailed.key_metrics);
-                renderAdvTrendChart(detailed.complaint_trends);
-                renderAdvCategoryChart(detailed.category_distribution);
-                renderAdvStatusChart(detailed.status_distribution);
-                renderAdvDeptTable(detailed.department_performance);
-                renderAdvHeatmap(heatmapData);
-
-                const updatedAt = new Date(detailed.last_updated).toLocaleString();
-                document.getElementById('advLastUpdated').textContent = `Last updated: ${updatedAt}`;
-
-            } catch (err) {
-                console.error('Analytics load error:', err);
-                document.getElementById('advLastUpdated').textContent = '❌ Failed to load analytics. Please check your login.';
-            }
-        }
-
-        // ─── KPI Cards ────────────────────────────────────────────────
-        function renderAdvKPIs(m) {
-            document.getElementById('advTotal').textContent = m.total_complaints;
-            document.getElementById('advRate').textContent = m.resolution_rate + '%';
-            document.getElementById('advAvgDays').textContent = m.avg_resolution_days + 'd';
-            document.getElementById('advHighPriority').textContent = m.high_priority_count;
-        }
-
-        // ─── 30-Day Trend Line Chart ──────────────────────────────────
-        function renderAdvTrendChart(trends) {
-            if (advTrendChart) advTrendChart.destroy();
-            const labels = Object.keys(trends);
-            const values = Object.values(trends);
-            const ctx = document.getElementById('advTrendChart').getContext('2d');
-            advTrendChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'Complaints',
-                        data: values,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59,130,246,.1)',
-                        pointBackgroundColor: '#3b82f6',
-                        pointRadius: 3,
-                        tension: 0.4,
-                        fill: true,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(30,41,59,.85)', padding: 10 } },
-                    scales: {
-                        x: { ticks: { maxTicksLimit: 8, color: '#64748b', font: { size: 11 } }, grid: { display: false } },
-                        y: { beginAtZero: true, ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: '#e2e8f0' } }
-                    }
-                }
-            });
-        }
-
-        // ─── Category Doughnut ────────────────────────────────────────
-        function renderAdvCategoryChart(categories) {
-            if (advCategoryChart) advCategoryChart.destroy();
-            const COLORS = ['#f87171', '#a78bfa', '#38bdf8', '#facc15', '#d1d5db'];
-            const ctx = document.getElementById('advCategoryChart').getContext('2d');
-            advCategoryChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: categories.map(c => c.label),
-                    datasets: [{
-                        data: categories.map(c => c.value),
-                        backgroundColor: COLORS,
-                        borderColor: '#fff',
-                        borderWidth: 2,
-                        hoverOffset: 6,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    cutout: '65%',
-                    plugins: {
-                        legend: { position: 'bottom', labels: { font: { size: 12, weight: '600' }, usePointStyle: true, padding: 12 } },
-                        tooltip: { backgroundColor: 'rgba(30,41,59,.85)', padding: 10 }
-                    }
-                }
-            });
-        }
-
-        // ─── Status Bar Chart ─────────────────────────────────────────
-        function renderAdvStatusChart(statuses) {
-            if (advStatusChart) advStatusChart.destroy();
-            const STATUS_COLORS = { 'Pending': '#fbbf24', 'In Progress': '#3b82f6', 'Resolved': '#059669' };
-            const ctx = document.getElementById('advStatusChart').getContext('2d');
-            advStatusChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: statuses.map(s => s.label),
-                    datasets: [{
-                        data: statuses.map(s => s.value),
-                        backgroundColor: statuses.map(s => STATUS_COLORS[s.label] || '#94a3b8'),
-                        borderRadius: 8,
-                        borderSkipped: false,
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(30,41,59,.85)', padding: 10 } },
-                    scales: {
-                        x: { beginAtZero: true, ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: '#e2e8f0' } },
-                        y: { ticks: { color: '#64748b', font: { size: 12, weight: '600' } }, grid: { display: false } }
-                    }
-                }
-            });
-        }
-
-        // ─── Department Table ─────────────────────────────────────────
-        function renderAdvDeptTable(depts) {
-            const tbody = document.getElementById('advDeptBody');
-            if (!depts || depts.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#64748b;padding:1.5rem">No department data available yet.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = depts.map(d => `
-            <tr>
-                <td><strong>${d.department}</strong></td>
-                <td>${d.total_complaints}</td>
-                <td>${d.resolved}</td>
-                <td>
-                    <span class="rate-bar" style="width:${d.resolved_percentage}px"></span>
-                    ${d.resolved_percentage}%
-                </td>
-                <td>${d.avg_resolution_days} d</td>
-            </tr>`).join('');
-        }
-
-        // ─── Heatmap ──────────────────────────────────────────────────
-        function renderAdvHeatmap(data) {
-            if (advHeatmapInstance) {
-                advHeatmapInstance.remove();
-                advHeatmapInstance = null;
-            }
-            const center = data.center || { lat: 20.5937, lng: 78.9629 };
-            advHeatmapInstance = L.map('advHeatmap').setView([center.lat, center.lng], 5);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(advHeatmapInstance);
-
-            const heatPoints = data.points.map(p => [p.lat, p.lng, p.intensity]);
-
-            if (heatPoints.length > 0 && typeof L.heatLayer === 'function') {
-                L.heatLayer(heatPoints, {
-                    radius: 25, blur: 15, maxZoom: 17, minOpacity: 0.3,
-                    gradient: { 0.2: '#3498db', 0.4: '#2ecc71', 0.6: '#f39c12', 0.8: '#e74c3c', 1.0: '#c0392b' }
-                }).addTo(advHeatmapInstance);
-            }
-
-            // Clickable circle markers
-            data.points.forEach(p => {
-                const color = p.intensity > 0.7 ? '#dc2626' : p.intensity > 0.4 ? '#f59e0b' : '#059669';
-                L.circleMarker([p.lat, p.lng], {
-                    radius: 5, fillColor: color, color: '#000',
-                    weight: 1, opacity: 1, fillOpacity: 0.8
-                }).bindPopup(`<strong>${p.title}</strong><br>Severity: ${(p.intensity * 100).toFixed(0)}%`)
-                    .addTo(advHeatmapInstance);
-            });
-
-            // Invalidate size so map renders correctly inside a hidden-then-shown div
-            setTimeout(() => advHeatmapInstance.invalidateSize(), 300);
         }
 
         // ─── Complaint Detail Modal ────────────────────────────────────
@@ -1886,6 +1746,9 @@
 
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Hide analytics section
+            const analyticsSection = document.getElementById('analyticsSection');
+            if (analyticsSection) analyticsSection.style.display = 'none';
 
             // Gracefully attempt WebSocket – never let WS errors crash the page
             try {
@@ -1925,7 +1788,62 @@
             }
         });
 
+        // ─── Report Download ─────────────────────────────────────────
+        async function downloadReport(period) {
+            const btn = document.getElementById(`btn-${period}`);
+            const statusEl = document.getElementById('rptStatus');
+            const origText = btn ? btn.textContent : '';
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ Generating…'; }
+            if (statusEl) {
+                statusEl.style.display = 'block';
+                statusEl.style.background = '#eff6ff';
+                statusEl.style.color = '#1e40af';
+                statusEl.textContent = '⏳ Generating your report, please wait…';
+            }
+
+            try {
+                const res = await fetch(`/api/reports/generate/?period=${period}`, {
+                    headers: { 'Authorization': `Token ${GO_AUTH_TOKEN}` }
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || `Server error ${res.status}`);
+                }
+
+                // Trigger browser file download
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const dateStr = new Date().toISOString().slice(0, 10);
+                a.download = `SCFMS_${period}_report_${dateStr}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+
+                if (statusEl) {
+                    statusEl.style.background = '#f0fdf4';
+                    statusEl.style.color = '#065f46';
+                    statusEl.textContent = '✅ Report downloaded successfully!';
+                }
+                setTimeout(() => { if (statusEl) statusEl.style.display = 'none'; }, 4000);
+
+            } catch (err) {
+                console.error('Report generation error:', err);
+                if (statusEl) {
+                    statusEl.style.background = '#fef2f2';
+                    statusEl.style.color = '#991b1b';
+                    statusEl.textContent = `❌ ${err.message}`;
+                }
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = origText; }
+            }
+        }
+
     </script>
+
 
     <!-- ── Mark as Duplicate Modal ──────────────────────────────────── -->
     <div id="dupModal"
@@ -2055,253 +1973,752 @@
 
     </script>
 
-<!-- ═══════════════ COMPLAINT DETAIL MODAL ═══════════════ -->
-<div id="complaintDetailModal" onclick="if(event.target===this)closeComplaintDetail()"
-    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:20000;
+    <!-- ═══════════════ COMPLAINT DETAIL MODAL ═══════════════ -->
+    <div id="complaintDetailModal" onclick="if(event.target===this)closeComplaintDetail()" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:20000;
            align-items:center;justify-content:center;padding:1rem;">
-    <div style="background:#fff;border-radius:1.25rem;width:100%;max-width:680px;max-height:90vh;
+        <div style="background:#fff;border-radius:1.25rem;width:100%;max-width:680px;max-height:90vh;
                 overflow-y:auto;box-shadow:0 25px 80px rgba(15,23,42,.35);">
 
-        <!-- Header -->
-        <div style="background:linear-gradient(135deg,#1e40af,#06b6d4);padding:1.25rem 1.5rem;
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg,#1e40af,#06b6d4);padding:1.25rem 1.5rem;
                     border-radius:1.25rem 1.25rem 0 0;display:flex;align-items:flex-start;gap:1rem;">
-            <div style="flex:1;">
-                <h3 id="cdmTitle" style="color:#fff;font-size:1.1rem;font-weight:700;margin:0 0 .5rem;"></h3>
-                <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
-                    <span id="cdmBadgeStatus" style="color:#fff;font-size:.75rem;font-weight:700;
+                <div style="flex:1;">
+                    <h3 id="cdmTitle" style="color:#fff;font-size:1.1rem;font-weight:700;margin:0 0 .5rem;"></h3>
+                    <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                        <span id="cdmBadgeStatus" style="color:#fff;font-size:.75rem;font-weight:700;
                           padding:.2rem .65rem;border-radius:999px;"></span>
-                    <span id="cdmBadgeSeverity" style="color:#fff;font-size:.75rem;font-weight:700;
+                        <span id="cdmBadgeSeverity" style="color:#fff;font-size:.75rem;font-weight:700;
                           padding:.2rem .65rem;border-radius:999px;"></span>
+                    </div>
                 </div>
-            </div>
-            <button onclick="closeComplaintDetail()"
-                style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:1.2rem;
+                <button onclick="closeComplaintDetail()" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:1.2rem;
                        cursor:pointer;border-radius:.5rem;padding:.25rem .6rem;line-height:1;">✕</button>
-        </div>
+            </div>
 
-        <!-- Body -->
-        <div style="padding:1.5rem;display:flex;flex-direction:column;gap:1.2rem;">
+            <!-- Body -->
+            <div style="padding:1.5rem;display:flex;flex-direction:column;gap:1.2rem;">
 
-            <!-- Image -->
-            <div style="border-radius:.75rem;overflow:hidden;border:2px solid #e2e8f0;background:#f8fafc;">
-                <img id="cdmImage" src="" alt="Complaint Image"
-                     style="width:100%;max-height:320px;object-fit:cover;display:none;">
-                <div id="cdmNoImage"
-                     style="height:160px;display:flex;align-items:center;justify-content:center;
+                <!-- Image -->
+                <div style="border-radius:.75rem;overflow:hidden;border:2px solid #e2e8f0;background:#f8fafc;">
+                    <img id="cdmImage" src="" alt="Complaint Image"
+                        style="width:100%;max-height:320px;object-fit:cover;display:none;">
+                    <div id="cdmNoImage" style="height:160px;display:flex;align-items:center;justify-content:center;
                             flex-direction:column;gap:.5rem;color:#94a3b8;">
-                    <span style="font-size:2.5rem;">📷</span>
-                    <span style="font-size:.85rem;">No image provided</span>
+                        <span style="font-size:2.5rem;">📷</span>
+                        <span style="font-size:.85rem;">No image provided</span>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Info grid -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+                <!-- Info grid -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+                    <div style="background:#f8fafc;border-radius:.6rem;padding:.75rem;">
+                        <div
+                            style="font-size:.72rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:.25rem;">
+                            Category</div>
+                        <div id="cdmCategory" style="font-weight:600;color:#1e293b;font-size:.9rem;"></div>
+                    </div>
+                    <div style="background:#f8fafc;border-radius:.6rem;padding:.75rem;">
+                        <div
+                            style="font-size:.72rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:.25rem;">
+                            Submitted</div>
+                        <div id="cdmDate" style="font-weight:600;color:#1e293b;font-size:.85rem;"></div>
+                    </div>
+                    <div style="background:#f8fafc;border-radius:.6rem;padding:.75rem;grid-column:1/-1;">
+                        <div
+                            style="font-size:.72rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:.25rem;">
+                            👤 Citizen</div>
+                        <div id="cdmCitizen" style="font-weight:600;color:#1e293b;font-size:.9rem;"></div>
+                    </div>
+                </div>
+
+                <!-- Description -->
                 <div style="background:#f8fafc;border-radius:.6rem;padding:.75rem;">
-                    <div style="font-size:.72rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:.25rem;">Category</div>
-                    <div id="cdmCategory" style="font-weight:600;color:#1e293b;font-size:.9rem;"></div>
+                    <div
+                        style="font-size:.72rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:.4rem;">
+                        📝 Description</div>
+                    <div id="cdmDescription"
+                        style="color:#334155;font-size:.9rem;line-height:1.6;white-space:pre-wrap;"></div>
                 </div>
+
+                <!-- Location -->
                 <div style="background:#f8fafc;border-radius:.6rem;padding:.75rem;">
-                    <div style="font-size:.72rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:.25rem;">Submitted</div>
-                    <div id="cdmDate" style="font-weight:600;color:#1e293b;font-size:.85rem;"></div>
+                    <div
+                        style="font-size:.72rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:.4rem;">
+                        Location</div>
+                    <div id="cdmLocation" style="color:#334155;font-size:.9rem;"></div>
                 </div>
-                <div style="background:#f8fafc;border-radius:.6rem;padding:.75rem;grid-column:1/-1;">
-                    <div style="font-size:.72rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:.25rem;">👤 Citizen</div>
-                    <div id="cdmCitizen" style="font-weight:600;color:#1e293b;font-size:.9rem;"></div>
-                </div>
-            </div>
 
-            <!-- Description -->
-            <div style="background:#f8fafc;border-radius:.6rem;padding:.75rem;">
-                <div style="font-size:.72rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:.4rem;">📝 Description</div>
-                <div id="cdmDescription" style="color:#334155;font-size:.9rem;line-height:1.6;white-space:pre-wrap;"></div>
-            </div>
-
-            <!-- Location -->
-            <div style="background:#f8fafc;border-radius:.6rem;padding:.75rem;">
-                <div style="font-size:.72rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:.4rem;">Location</div>
-                <div id="cdmLocation" style="color:#334155;font-size:.9rem;"></div>
-            </div>
-
-            <!-- Actions -->
-            <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;padding-top:.25rem;">
-                <div id="cdmActions"></div>
-                <button onclick="closeComplaintDetail()"
-                    style="background:#f1f5f9;color:#475569;border:none;border-radius:.6rem;
+                <!-- Actions -->
+                <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;padding-top:.25rem;">
+                    <div id="cdmActions"></div>
+                    <button onclick="closeComplaintDetail()" style="background:#f1f5f9;color:#475569;border:none;border-radius:.6rem;
                            padding:.5rem 1.1rem;font-size:.87rem;cursor:pointer;font-weight:600;">
-                    ✕ Close
-                </button>
+                        ✕ Close
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<!-- ═══════════════ END COMPLAINT DETAIL MODAL ═══════════════ -->
+    <!-- ═══════════════ END COMPLAINT DETAIL MODAL ═══════════════ -->
 
-<!-- ══════════════════════ CHAT WIDGET (GO) ══════════════════════ -->
-
-<style>
-    #chatBubble {
-        position:fixed;bottom:28px;right:28px;z-index:10000;
-        width:58px;height:58px;border-radius:50%;
-        background:linear-gradient(135deg,#1e40af,#06b6d4);
-        display:flex;align-items:center;justify-content:center;
-        font-size:1.5rem;cursor:pointer;
-        box-shadow:0 8px 30px rgba(30,64,175,.4);
-        border:none;transition:transform .2s,box-shadow .2s;
-        animation:chatPop .4s cubic-bezier(.34,1.56,.64,1);
-    }
-    @keyframes chatPop{from{transform:scale(0)}to{transform:scale(1)}}
-    #chatBubble:hover{transform:scale(1.1);box-shadow:0 12px 40px rgba(30,64,175,.5)}
-    #chatWindow{
-        position:fixed;bottom:100px;right:28px;z-index:10000;
-        width:360px;max-height:520px;
-        background:#fff;border-radius:1.25rem;
-        box-shadow:0 20px 60px rgba(15,23,42,.2);
-        display:none;flex-direction:column;overflow:hidden;
-    }
-    #chatHeader{
-        background:linear-gradient(135deg,#1e40af,#06b6d4);
-        padding:1rem 1.25rem;color:#fff;
-        display:flex;align-items:center;gap:.75rem;
-    }
-    #chatHeader .bot-avatar{font-size:1.6rem;line-height:1}
-    #chatHeader .bot-info h4{font-size:.95rem;font-weight:700;margin:0}
-    #chatHeader .bot-info p{font-size:.72rem;margin:0;opacity:.85}
-    #chatHeader .close-chat{margin-left:auto;background:none;border:none;
-        color:#fff;font-size:1.3rem;cursor:pointer;opacity:.8;line-height:1}
-    #chatHeader .close-chat:hover{opacity:1}
-    #chatMessages{
-        flex:1;overflow-y:auto;padding:.9rem 1rem;
-        display:flex;flex-direction:column;gap:.7rem;
-        max-height:340px;background:#f8fafc;
-    }
-    #chatMessages .chat-msg{max-width:82%;word-break:break-word;line-height:1.5}
-    #chatMessages .chat-msg.bot{align-self:flex-start;background:#fff;color:#1e293b;
-        border-radius:0 1rem 1rem 1rem;padding:.6rem .9rem;font-size:.85rem;
-        box-shadow:0 2px 8px rgba(15,23,42,.08);border:1px solid #e2e8f0}
-    #chatMessages .chat-msg.user{align-self:flex-end;
-        background:linear-gradient(135deg,#1e40af,#06b6d4);
-        color:#fff;border-radius:1rem 1rem 0 1rem;padding:.6rem .9rem;font-size:.85rem}
-    #chatMessages .typing-dot{display:inline-flex;gap:4px;padding:.6rem .9rem}
-    #chatMessages .typing-dot span{
-        width:7px;height:7px;border-radius:50%;background:#94a3b8;
-        animation:blink2 1.2s infinite}
-    #chatMessages .typing-dot span:nth-child(2){animation-delay:.2s}
-    #chatMessages .typing-dot span:nth-child(3){animation-delay:.4s}
-    @keyframes blink2{0%,80%,100%{transform:scale(1);opacity:.4}40%{transform:scale(1.3);opacity:1}}
-    #chatInputRow{
-        display:flex;padding:.7rem .8rem;gap:.5rem;
-        border-top:1px solid #e2e8f0;background:#fff}
-    #chatInput{
-        flex:1;border:1.5px solid #e2e8f0;border-radius:.75rem;
-        padding:.5rem .85rem;font-size:.87rem;outline:none;
-        transition:border-color .2s}
-    #chatInput:focus{border-color:#1e40af}
-    #chatSendBtn{
-        background:linear-gradient(135deg,#1e40af,#06b6d4);
-        color:#fff;border:none;border-radius:.75rem;
-        padding:.5rem .9rem;font-size:1rem;cursor:pointer;
-        transition:opacity .2s}
-    #chatSendBtn:hover{opacity:.88}
-    #chatSendBtn:disabled{opacity:.4;cursor:default}
-    .chat-welcome-go{font-size:.8rem;color:#94a3b8;text-align:center;padding:.5rem 0}
-</style>
-
-<button id="chatBubble" onclick="toggleGoChat()" title="Chat with AI Assistant">🤖</button>
-
-<div id="chatWindow">
-    <div id="chatHeader">
-        <div class="bot-avatar">🤖</div>
-        <div class="bot-info">
-            <h4>SCFMS Assistant</h4>
-            <p>Powered by Gemini AI • Ask anything</p>
-        </div>
-        <button class="close-chat" onclick="toggleGoChat()">✕</button>
-    </div>
-    <div id="chatMessages">
-        <div class="chat-welcome-go">Ask about complaint trends, categories, or department performance.</div>
-        <div class="chat-msg bot">👋 Hello! I'm your SCFMS AI Assistant. I can help you understand complaint data, answer policy questions, or assist with managing complaints. How can I help?</div>
-    </div>
-    <div id="chatInputRow">
-        <input id="chatInput" type="text" placeholder="Type a message…" maxlength="500"
-               onkeydown="if(event.key==='Enter')sendGoMessage()">
-        <button id="chatSendBtn" onclick="sendGoMessage()">➤</button>
-    </div>
-</div>
-
-<script>
-    const _goChatToken = localStorage.getItem('go_auth_token') || localStorage.getItem('auth_token');
-    let _goChatHistory = [];
-    let _goChatOpen = false;
-
-    function toggleGoChat() {
-        _goChatOpen = !_goChatOpen;
-        const win = document.getElementById('chatWindow');
-        win.style.display = _goChatOpen ? 'flex' : 'none';
-        if (_goChatOpen) document.getElementById('chatInput').focus();
-    }
-
-    function appendGoMsg(text, role) {
-        const msgs = document.getElementById('chatMessages');
-        const div  = document.createElement('div');
-        div.className = `chat-msg ${role}`;
-        div.textContent = text;
-        msgs.appendChild(div);
-        msgs.scrollTop = msgs.scrollHeight;
-    }
-
-    function showGoTyping() {
-        const msgs = document.getElementById('chatMessages');
-        const div  = document.createElement('div');
-        div.className = 'chat-msg bot typing-dot';
-        div.id = 'goTyping';
-        div.innerHTML = '<span></span><span></span><span></span>';
-        msgs.appendChild(div);
-        msgs.scrollTop = msgs.scrollHeight;
-    }
-
-    async function sendGoMessage() {
-        const input = document.getElementById('chatInput');
-        const send  = document.getElementById('chatSendBtn');
-        const text  = input.value.trim();
-        if (!text) return;
-
-        input.value = '';
-        input.disabled = true;
-        send.disabled  = true;
-
-        appendGoMsg(text, 'user');
-        showGoTyping();
-
-        try {
-            const res = await fetch('/api/chatbot/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Token ${_goChatToken}`,
-                },
-                body: JSON.stringify({ message: text, history: _goChatHistory }),
-            });
-            const data  = await res.json();
-            const reply = data.reply || 'Sorry, I could not get a response.';
-
-            _goChatHistory.push({ role: 'user',  parts: [text] });
-            _goChatHistory.push({ role: 'model', parts: [reply] });
-            if (_goChatHistory.length > 20) _goChatHistory = _goChatHistory.slice(-20);
-
-            const t = document.getElementById('goTyping');
-            if (t) t.remove();
-            appendGoMsg(reply, 'bot');
-        } catch (err) {
-            const t = document.getElementById('goTyping');
-            if (t) t.remove();
-            appendGoMsg('⚠️ Connection error. Please try again.', 'bot');
-        } finally {
-            input.disabled = false;
-            send.disabled  = false;
-            input.focus();
+    <!-- ══════════════════ RESOLUTION PROOF MODAL ══════════════════ -->
+    <style>
+        #resolutionProofModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(6px);
+            z-index: 10001;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            animation: rpFadeIn .2s ease;
         }
-    }
-</script>
-<!-- ═══════════════════ END CHAT WIDGET ═══════════════════ -->
+
+        @keyframes rpFadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .rp-card {
+            background: #fff;
+            border-radius: 1.25rem;
+            width: 100%;
+            max-width: 520px;
+            max-height: 92vh;
+            overflow-y: auto;
+            box-shadow: 0 30px 90px rgba(15, 23, 42, .4);
+            animation: rpSlideIn .3s cubic-bezier(.34, 1.56, .64, 1);
+        }
+
+        @keyframes rpSlideIn {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .rp-header {
+            background: linear-gradient(135deg, #059669, #0d9488);
+            padding: 1.25rem 1.5rem;
+            border-radius: 1.25rem 1.25rem 0 0;
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+        }
+
+        .rp-header-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, .2);
+            border-radius: .75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .rp-header-text h3 {
+            color: #fff;
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin: 0 0 .1rem;
+        }
+
+        .rp-header-text p {
+            color: rgba(255, 255, 255, .8);
+            font-size: .8rem;
+            margin: 0;
+        }
+
+        .rp-header-close {
+            margin-left: auto;
+            background: rgba(255, 255, 255, .2);
+            border: none;
+            color: #fff;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border-radius: .5rem;
+            padding: .3rem .6rem;
+            transition: background .2s;
+        }
+
+        .rp-header-close:hover {
+            background: rgba(255, 255, 255, .35);
+        }
+
+        .rp-body {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .rp-info-box {
+            background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+            border: 1px solid #a7f3d0;
+            border-radius: .85rem;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+        }
+
+        .rp-info-box span.icon {
+            font-size: 1.5rem;
+        }
+
+        .rp-info-box p {
+            font-size: .87rem;
+            color: #065f46;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .rp-info-box strong {
+            color: #047857;
+        }
+
+        .rp-drop-zone {
+            border: 2.5px dashed #cbd5e1;
+            border-radius: 1rem;
+            background: #f8fafc;
+            padding: 2.5rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: .75rem;
+            cursor: pointer;
+            transition: all .2s ease;
+            text-align: center;
+        }
+
+        .rp-drop-zone:hover {
+            border-color: #059669;
+            background: rgba(5, 150, 105, .04);
+        }
+
+        .rp-drop-zone .upload-icon {
+            font-size: 3rem;
+            line-height: 1;
+        }
+
+        .rp-drop-zone h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .rp-drop-zone p {
+            font-size: .82rem;
+            color: #64748b;
+            margin: 0;
+        }
+
+        .rp-browse-btn {
+            display: inline-block;
+            margin-top: .4rem;
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: #fff;
+            padding: .5rem 1.4rem;
+            border-radius: .6rem;
+            font-size: .87rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: opacity .2s;
+        }
+
+        .rp-browse-btn:hover {
+            opacity: .88;
+        }
+
+        .rp-preview-wrap {
+            position: relative;
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 2px solid #a7f3d0;
+        }
+
+        #rpPreview {
+            width: 100%;
+            max-height: 280px;
+            object-fit: cover;
+            display: none;
+        }
+
+        .rp-preview-clear {
+            position: absolute;
+            top: .5rem;
+            right: .5rem;
+            background: rgba(0, 0, 0, .55);
+            color: #fff;
+            border: none;
+            border-radius: .5rem;
+            padding: .3rem .65rem;
+            font-size: .82rem;
+            cursor: pointer;
+            font-weight: 700;
+            transition: background .2s;
+        }
+
+        .rp-preview-clear:hover {
+            background: rgba(220, 38, 38, .8);
+        }
+
+        #rpMsg {
+            display: none;
+            padding: .65rem 1rem;
+            border-radius: .6rem;
+            font-size: .87rem;
+            font-weight: 600;
+        }
+
+        .rp-footer {
+            display: flex;
+            gap: .75rem;
+            align-items: center;
+            padding-top: .25rem;
+        }
+
+        #rpConfirmBtn {
+            flex: 1;
+            background: linear-gradient(135deg, #059669, #047857);
+            color: #fff;
+            border: none;
+            border-radius: .75rem;
+            padding: .75rem 1.5rem;
+            font-size: .95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity .2s, transform .15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5rem;
+        }
+
+        #rpConfirmBtn:hover:not(:disabled) {
+            opacity: .9;
+            transform: translateY(-1px);
+        }
+
+        #rpConfirmBtn:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #rpCancelBtn {
+            background: #f1f5f9;
+            color: #475569;
+            border: none;
+            border-radius: .75rem;
+            padding: .75rem 1.25rem;
+            font-size: .9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .2s;
+        }
+
+        #rpCancelBtn:hover {
+            background: #e2e8f0;
+        }
+    </style>
+
+    <div id="resolutionProofModal">
+        <div class="rp-card">
+            <!-- Header -->
+            <div class="rp-header">
+                <div class="rp-header-icon">📸</div>
+                <div class="rp-header-text">
+                    <h3>Resolution Proof</h3>
+                    <p>Complaint <span id="rpComplaintNum" style="font-weight:800;"></span></p>
+                </div>
+                <button class="rp-header-close" onclick="closeResolutionProofModal()">✕</button>
+            </div>
+
+            <!-- Body -->
+            <div class="rp-body">
+                <!-- Info banner -->
+                <div class="rp-info-box">
+                    <span class="icon">🔔</span>
+                    <p>Upload a <strong>proof photo</strong> showing the issue has been fixed. The citizen will receive
+                        this image in their notification as evidence of resolution.</p>
+                </div>
+
+                <!-- Drop Zone -->
+                <div id="rpDropZone" class="rp-drop-zone" ondragover="rpOnDragOver(event)" ondragleave="rpOnDragLeave()"
+                    ondrop="rpOnDrop(event)" onclick="document.getElementById('rpFileInput').click()">
+                    <div class="upload-icon">📷</div>
+                    <h4>Drag & drop proof photo here</h4>
+                    <p>or click to browse your files</p>
+                    <button class="rp-browse-btn" type="button"
+                        onclick="event.stopPropagation();document.getElementById('rpFileInput').click()">
+                        Browse Files
+                    </button>
+                    <p style="font-size:.75rem;color:#94a3b8;margin-top:.25rem;">JPG, PNG, WEBP supported</p>
+                    <input id="rpFileInput" type="file" accept="image/*" style="display:none;"
+                        onchange="rpOnFileChange(event)">
+                </div>
+
+                <!-- Image Preview -->
+                <div class="rp-preview-wrap" id="rpPreviewWrap" style="display:none;">
+                    <img id="rpPreview" alt="Resolution proof preview">
+                    <button class="rp-preview-clear" onclick="rpClearPreview()">✕ Change</button>
+                </div>
+
+                <!-- Message -->
+                <div id="rpMsg"></div>
+
+                <!-- Footer Buttons -->
+                <div class="rp-footer">
+                    <button id="rpCancelBtn" onclick="closeResolutionProofModal()">Cancel</button>
+                    <button id="rpConfirmBtn" disabled onclick="confirmResolveWithProof()">
+                        ✅ Resolve & Notify Citizen
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Close on backdrop click
+        document.getElementById('resolutionProofModal').addEventListener('click', function (e) {
+            if (e.target === this) closeResolutionProofModal();
+        });
+    </script>
+    <!-- ════════════ END RESOLUTION PROOF MODAL ════════════ -->
+
+    <!-- ══════════════════════ CHAT WIDGET (GO) ══════════════════════ -->
+
+    <style>
+        #chatBubble {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            z-index: 10000;
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1e40af, #06b6d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 8px 30px rgba(30, 64, 175, .4);
+            border: none;
+            transition: transform .2s, box-shadow .2s;
+            animation: chatPop .4s cubic-bezier(.34, 1.56, .64, 1);
+        }
+
+        @keyframes chatPop {
+            from {
+                transform: scale(0)
+            }
+
+            to {
+                transform: scale(1)
+            }
+        }
+
+        #chatBubble:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 40px rgba(30, 64, 175, .5)
+        }
+
+        #chatWindow {
+            position: fixed;
+            bottom: 100px;
+            right: 28px;
+            z-index: 10000;
+            width: 360px;
+            max-height: 520px;
+            background: #fff;
+            border-radius: 1.25rem;
+            box-shadow: 0 20px 60px rgba(15, 23, 42, .2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #chatHeader {
+            background: linear-gradient(135deg, #1e40af, #06b6d4);
+            padding: 1rem 1.25rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+        }
+
+        #chatHeader .bot-avatar {
+            font-size: 1.6rem;
+            line-height: 1
+        }
+
+        #chatHeader .bot-info h4 {
+            font-size: .95rem;
+            font-weight: 700;
+            margin: 0
+        }
+
+        #chatHeader .bot-info p {
+            font-size: .72rem;
+            margin: 0;
+            opacity: .85
+        }
+
+        #chatHeader .close-chat {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.3rem;
+            cursor: pointer;
+            opacity: .8;
+            line-height: 1
+        }
+
+        #chatHeader .close-chat:hover {
+            opacity: 1
+        }
+
+        #chatMessages {
+            flex: 1;
+            overflow-y: auto;
+            padding: .9rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: .7rem;
+            max-height: 340px;
+            background: #f8fafc;
+        }
+
+        #chatMessages .chat-msg {
+            max-width: 82%;
+            word-break: break-word;
+            line-height: 1.5
+        }
+
+        #chatMessages .chat-msg.bot {
+            align-self: flex-start;
+            background: #fff;
+            color: #1e293b;
+            border-radius: 0 1rem 1rem 1rem;
+            padding: .6rem .9rem;
+            font-size: .85rem;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, .08);
+            border: 1px solid #e2e8f0
+        }
+
+        #chatMessages .chat-msg.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #1e40af, #06b6d4);
+            color: #fff;
+            border-radius: 1rem 1rem 0 1rem;
+            padding: .6rem .9rem;
+            font-size: .85rem
+        }
+
+        #chatMessages .typing-dot {
+            display: inline-flex;
+            gap: 4px;
+            padding: .6rem .9rem
+        }
+
+        #chatMessages .typing-dot span {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #94a3b8;
+            animation: blink2 1.2s infinite
+        }
+
+        #chatMessages .typing-dot span:nth-child(2) {
+            animation-delay: .2s
+        }
+
+        #chatMessages .typing-dot span:nth-child(3) {
+            animation-delay: .4s
+        }
+
+        @keyframes blink2 {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(1);
+                opacity: .4
+            }
+
+            40% {
+                transform: scale(1.3);
+                opacity: 1
+            }
+        }
+
+        #chatInputRow {
+            display: flex;
+            padding: .7rem .8rem;
+            gap: .5rem;
+            border-top: 1px solid #e2e8f0;
+            background: #fff
+        }
+
+        #chatInput {
+            flex: 1;
+            border: 1.5px solid #e2e8f0;
+            border-radius: .75rem;
+            padding: .5rem .85rem;
+            font-size: .87rem;
+            outline: none;
+            transition: border-color .2s
+        }
+
+        #chatInput:focus {
+            border-color: #1e40af
+        }
+
+        #chatSendBtn {
+            background: linear-gradient(135deg, #1e40af, #06b6d4);
+            color: #fff;
+            border: none;
+            border-radius: .75rem;
+            padding: .5rem .9rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity .2s
+        }
+
+        #chatSendBtn:hover {
+            opacity: .88
+        }
+
+        #chatSendBtn:disabled {
+            opacity: .4;
+            cursor: default
+        }
+
+        .chat-welcome-go {
+            font-size: .8rem;
+            color: #94a3b8;
+            text-align: center;
+            padding: .5rem 0
+        }
+    </style>
+
+    <button id="chatBubble" onclick="toggleGoChat()" title="Chat with AI Assistant">🤖</button>
+
+    <div id="chatWindow">
+        <div id="chatHeader">
+            <div class="bot-avatar">🤖</div>
+            <div class="bot-info">
+                <h4>SCFMS Assistant</h4>
+                <p>Powered by Gemini AI • Ask anything</p>
+            </div>
+            <button class="close-chat" onclick="toggleGoChat()">✕</button>
+        </div>
+        <div id="chatMessages">
+            <div class="chat-welcome-go">Ask about complaint trends, categories, or department performance.</div>
+            <div class="chat-msg bot">👋 Hello! I'm your SCFMS AI Assistant. I can help you understand complaint data,
+                answer policy questions, or assist with managing complaints. How can I help?</div>
+        </div>
+        <div id="chatInputRow">
+            <input id="chatInput" type="text" placeholder="Type a message…" maxlength="500"
+                onkeydown="if(event.key==='Enter')sendGoMessage()">
+            <button id="chatSendBtn" onclick="sendGoMessage()">➤</button>
+        </div>
+    </div>
+
+    <script>
+        const _goChatToken = localStorage.getItem('go_auth_token') || localStorage.getItem('auth_token');
+        let _goChatHistory = [];
+        let _goChatOpen = false;
+
+        function toggleGoChat() {
+            _goChatOpen = !_goChatOpen;
+            const win = document.getElementById('chatWindow');
+            win.style.display = _goChatOpen ? 'flex' : 'none';
+            if (_goChatOpen) document.getElementById('chatInput').focus();
+        }
+
+        function appendGoMsg(text, role) {
+            const msgs = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = `chat-msg ${role}`;
+            div.textContent = text;
+            msgs.appendChild(div);
+            msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        function showGoTyping() {
+            const msgs = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'chat-msg bot typing-dot';
+            div.id = 'goTyping';
+            div.innerHTML = '<span></span><span></span><span></span>';
+            msgs.appendChild(div);
+            msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        async function sendGoMessage() {
+            const input = document.getElementById('chatInput');
+            const send = document.getElementById('chatSendBtn');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            input.disabled = true;
+            send.disabled = true;
+
+            appendGoMsg(text, 'user');
+            showGoTyping();
+
+            try {
+                const res = await fetch('/api/chatbot/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Token ${_goChatToken}`,
+                    },
+                    body: JSON.stringify({ message: text, history: _goChatHistory }),
+                });
+                const data = await res.json();
+                const reply = data.reply || 'Sorry, I could not get a response.';
+
+                _goChatHistory.push({ role: 'user', parts: [text] });
+                _goChatHistory.push({ role: 'model', parts: [reply] });
+                if (_goChatHistory.length > 20) _goChatHistory = _goChatHistory.slice(-20);
+
+                const t = document.getElementById('goTyping');
+                if (t) t.remove();
+                appendGoMsg(reply, 'bot');
+            } catch (err) {
+                const t = document.getElementById('goTyping');
+                if (t) t.remove();
+                appendGoMsg('⚠️ Connection error. Please try again.', 'bot');
+            } finally {
+                input.disabled = false;
+                send.disabled = false;
+                input.focus();
+            }
+        }
+    </script>
+    <!-- ═══════════════════ END CHAT WIDGET ═══════════════════ -->
 
     {% endblock %}

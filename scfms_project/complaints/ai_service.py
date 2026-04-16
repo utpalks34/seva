@@ -1,41 +1,26 @@
-# complaints/ai_service.py
-
 import os
+
+import google.generativeai as genai
 import requests
 from PIL import Image
-import google.generativeai as genai
 from django.conf import settings
 
-# ---------------------------
-# API KEYS from Django Settings
-# ---------------------------
+
 GEMINI_API_KEY = getattr(settings, 'GEMINI_API_KEY', os.getenv("GEMINI_API_KEY"))
 HF_API_KEY = getattr(settings, 'HUGGING_FACE_API_KEY', os.getenv("HUGGING_FACE_API_KEY"))
 
-# Keys must be set in .env — no hardcoded fallbacks for security
-
-
-# ---------------------------
-# HuggingFace Model (Image Classification)
-# ---------------------------
 HF_INFERENCE_API_URL = "https://api-inference.huggingface.co/models/google/vit-base-patch16-224"
 HF_HEADERS = {"Authorization": f"Bearer {HF_API_KEY}"}
 
-# ---------------------------
-# Initialize Gemini
-# ---------------------------
+
 try:
     genai.configure(api_key=GEMINI_API_KEY)
-    print("✅ Gemini API configured successfully")
+    print("Gemini API configured successfully")
 except Exception as e:
-    print(f"❌ Gemini API configuration failed: {e}")
+    print(f"Gemini API configuration failed: {e}")
 
 
-# ============================================================
-# 1. IMAGE CATEGORY CLASSIFICATION (Hugging Face)
-# ============================================================
 def classify_image_category(image_path):
-
     try:
         with open(image_path, "rb") as f:
             img_bytes = f.read()
@@ -45,7 +30,6 @@ def classify_image_category(image_path):
             headers=HF_HEADERS,
             data=img_bytes
         )
-
         response.raise_for_status()
         predictions = response.json()
 
@@ -54,15 +38,13 @@ def classify_image_category(image_path):
         if isinstance(predictions, list) and len(predictions) > 0:
             label = predictions[0].get("label", "").lower()
 
-            # SIMPLE BOT MAPPING — update later as needed
             if "road" in label or "pothole" in label:
                 return "RO"
-            elif "garbage" in label or "trash" in label:
+            if "garbage" in label or "trash" in label:
                 return "GA"
-            elif "water" in label or "pipe" in label or "electric" in label:
+            if "water" in label or "pipe" in label or "electric" in label:
                 return "UT"
-            else:
-                return "OT"
+            return "OT"
 
         return "OT"
 
@@ -71,27 +53,20 @@ def classify_image_category(image_path):
         return "OT"
 
 
-
-# ============================================================
-# 2. TITLE + DESCRIPTION GENERATION (Gemini Vision)
-# ============================================================
 def generate_description(image_path, category_code):
-    """Generate title and description using Gemini Vision API"""
-    
+    """Generate title and description using Gemini Vision API."""
     try:
-        print(f"🔍 Starting description generation for category: {category_code}")
-        
-        # Verify image exists and is readable
+        print(f"Starting description generation for category: {category_code}")
+
         if not os.path.exists(image_path):
-            print(f"❌ Image file not found: {image_path}")
+            print(f"Image file not found: {image_path}")
             return "Civic Issue Complaint", "Issue reported by citizen"
 
-        # Read and verify image
         try:
             image = Image.open(image_path)
-            print(f"✅ Image loaded: {image.format} {image.size}")
+            print(f"Image loaded: {image.format} {image.size}")
         except Exception as img_err:
-            print(f"❌ Failed to open image: {img_err}")
+            print(f"Failed to open image: {img_err}")
             return "Civic Issue Complaint", "Issue reported by citizen"
 
         prompt = f"""You are a civic issue analyzer. Analyze this image of a civic complaint.
@@ -103,58 +78,43 @@ Title: [8 words or less - clear, concise title]
 Description: [40 words or less - what's the issue and where]"""
 
         try:
-            # Use Gemini 2.0 Flash Experimental (supports generateContent properly)
             model = genai.GenerativeModel("gemini-2.0-flash-exp")
-            
-            # Generate content with image
             response = model.generate_content([
                 Image.open(image_path),
                 prompt
             ])
-            
-            text = response.text.strip()
-            print(f"✅ Gemini response received: {len(text)} chars")
-            print(f"📝 Raw output: {text[:200]}...")
 
-            # Default values
+            text = response.text.strip()
+            print(f"Gemini response received: {len(text)} chars")
+            print(f"Raw output: {text[:200]}...")
+
             title = "Civic Issue Complaint"
             description = "Issue reported by citizen"
 
-            # Parse response
-            lines = text.split('\n')
-            for i, line in enumerate(lines):
+            for line in text.split('\n'):
                 if 'Title:' in line:
-                    title = line.split('Title:')[1].strip()[:100]
-                    title = title.strip('[]"\'')
-                    
+                    title = line.split('Title:')[1].strip()[:100].strip('[]"\'')
                 if 'Description:' in line:
-                    description = line.split('Description:')[1].strip()[:200]
-                    description = description.strip('[]"\'')
+                    description = line.split('Description:')[1].strip()[:200].strip('[]"\'')
 
-            print(f"✅ Title: {title}")
-            print(f"✅ Description: {description}")
-            
+            print(f"Title: {title}")
+            print(f"Description: {description}")
             return title, description
 
         except Exception as gemini_err:
-            print(f"❌ Gemini generation failed: {gemini_err}")
+            print(f"Gemini generation failed: {gemini_err}")
             print(f"Error type: {type(gemini_err).__name__}")
             return "Civic Issue Complaint", "Issue reported by citizen"
 
     except Exception as e:
-        print(f"❌ Unexpected error in generate_description: {e}")
+        print(f"Unexpected error in generate_description: {e}")
         print(f"Error type: {type(e).__name__}")
         import traceback
         traceback.print_exc()
         return "Civic Issue Complaint", "Issue reported by citizen"
 
 
-
-# ============================================================
-# 3. RULE-BASED SEVERITY SCORE ENGINE
-# ============================================================
 def calculate_severity_score(category_code):
-
     if category_code == "RO":
         return 75
     if category_code == "GA":
@@ -163,5 +123,4 @@ def calculate_severity_score(category_code):
         return 90
     if category_code == "PB":
         return 40
-
-    return 10  # default low severity
+    return 10

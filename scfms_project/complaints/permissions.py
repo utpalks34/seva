@@ -9,7 +9,11 @@ class IsPublicCitizen(BasePermission):
     message = 'Access denied. Only Public Citizens can perform this action.'
 
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.role == 'PC')
+        return bool(
+            request.user and request.user.is_authenticated
+            and request.user.role == 'PC'
+            and request.user.is_verified
+        )
 
 class IsGovernmentOfficial(BasePermission):
     """
@@ -18,5 +22,19 @@ class IsGovernmentOfficial(BasePermission):
     message = 'Access denied. Only Government Officials can perform this action.'
 
     def has_permission(self, request, view):
-        # We can use is_staff for GOs as well, or just rely on the 'role' field
-        return bool(request.user and request.user.is_authenticated and request.user.role == 'GO')
+        return bool(
+            request.user and request.user.is_authenticated
+            and request.user.role in {'GO', 'AD'}
+            and request.user.is_verified
+        )
+
+
+class IsAdminRole(BasePermission):
+    message = 'Access denied. Only administrators can perform this action.'
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user and request.user.is_authenticated
+            and request.user.role == 'AD'
+            and request.user.is_staff
+        )

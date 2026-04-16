@@ -1,766 +1,846 @@
 {% extends "base.html" %}
 
-{% block title %}Digital Governance | SCFMS{% endblock %}
+{% block title %}SCFMS – Smart City Feedback Management System | Digital Governance{% endblock %}
 
 {% block content %}
-<!-- Hero Section with Professional Government Design -->
-<div class="relative min-h-screen w-screen flex flex-col justify-between -m-6 overflow-hidden">
-    
-    <!-- Background with Subtle Gradient and Patterns -->
-    <div class="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-        <!-- Subtle Grid Pattern -->
-        <div class="absolute inset-0 opacity-5" style="background-image: linear-gradient(90deg, #fff 1px, transparent 1px), linear-gradient(#fff 1px, transparent 1px); background-size: 50px 50px;"></div>
-        
-        <!-- Animated Gradient Orbs (Very Subtle) -->
-        <div class="absolute top-20 left-10 w-96 h-96 bg-saffron/5 rounded-full filter blur-3xl animate-float"></div>
-        <div class="absolute bottom-32 right-20 w-80 h-80 bg-green-i/5 rounded-full filter blur-3xl animate-float" style="animation-delay: 3s;"></div>
-        <div class="absolute top-1/3 right-1/4 w-72 h-72 bg-blue-500/3 rounded-full filter blur-3xl animate-float" style="animation-delay: 1.5s;"></div>
-    </div>
-    
-    <!-- Top Tricolor Bar - Enhanced -->
-    <div class="h-1 flex w-full absolute top-0 left-0 z-20 shadow-2xl">
-        <div class="flex-1 bg-saffron"></div>
-        <div class="flex-1 bg-white"></div>
-        <div class="flex-1 bg-green-i"></div>
-    </div>
+<style>
+/* ── Reset & Base ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff; color: #1a1a1a; }
 
-    <!-- Content Container -->
-    <div class="flex-grow flex items-center justify-center p-4 pt-20 relative z-10">
-        <div class="w-full max-w-6xl mx-auto">
-            
-            <!-- Official Badge / Seal -->
-            <div class="text-center mb-12 animate-fade-in-down">
-                <div class="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-white/8 border border-white/20 backdrop-blur-md hover:bg-white/12 transition duration-500">
-                    <span class="text-white/90 text-xs font-bold tracking-widest uppercase">🇮🇳 Government of India</span>
-                </div>
-            </div>
+/* ── Tricolor Strip ───────────────────────────────────── */
+.tricolor-bar { display: flex; height: 5px; width: 100%; }
+.tricolor-bar .saffron { flex: 1; background: #FF9933; }
+.tricolor-bar .white   { flex: 1; background: #FFFFFF; border-top: 1px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; }
+.tricolor-bar .green   { flex: 1; background: #138808; }
 
-            <!-- Main Content Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                
-                <!-- Left Content -->
-                <div class="space-y-8 animate-fade-in-left">
-                    
-                    <!-- Title with Gradient -->
-                    <div>
-                        <h1 class="text-5xl md:text-6xl font-bold mb-4 text-white leading-tight">
-                            <span class="inline-block">Smart City</span>
-                            <br />
-                            <span class="bg-gradient-to-r from-saffron via-white to-green-i bg-clip-text text-transparent font-black">Feedback Management</span>
-                        </h1>
-                        <p class="text-white/70 text-lg font-medium">A Digital India Initiative</p>
-                    </div>
+/* ── Top Utility Bar ──────────────────────────────────── */
+.utility-bar {
+    background: #f0f4f8;
+    border-bottom: 1px solid #d8e2ed;
+    padding: 5px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11.5px;
+    color: #555;
+}
+.utility-bar a { color: #1a5276; text-decoration: none; margin-left: 16px; font-weight: 500; }
+.utility-bar a:hover { text-decoration: underline; }
+.skip-links { font-size: 11px; }
 
-                    <!-- Sanskrit Motto -->
-                    <div class="p-6 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-white/20 transition duration-300">
-                        <p class="text-3xl font-bold text-saffron mb-2">"सेवा परमॊ धर्मः"</p>
-                        <p class="text-white/60 text-sm font-medium tracking-wide">Service is the highest form of duty</p>
-                    </div>
+/* ── Main Header ─────────────────────────────────────── */
+.gov-header {
+    background: linear-gradient(135deg, #1a3a6b 0%, #154475 60%, #0e3060 100%);
+    padding: 18px 30px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+}
+.gov-header::after {
+    content: '';
+    position: absolute;
+    right: -60px; top: -60px;
+    width: 280px; height: 280px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+}
+.emblem-wrap {
+    width: 72px; height: 72px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.8rem;
+    flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.25);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+.header-text { flex: 1; }
+.header-text .portal-name-hi {
+    font-size: 13px; color: rgba(255,255,255,0.75); font-weight: 400; letter-spacing: 0.5px;
+    display: block; margin-bottom: 2px;
+}
+.header-text h1 {
+    font-size: 1.75rem; font-weight: 700; color: #ffffff;
+    letter-spacing: 0.3px; line-height: 1.2;
+}
+.header-text .subtitle {
+    font-size: 12.5px; color: rgba(255,255,255,0.65);
+    margin-top: 3px; font-weight: 400;
+}
+.header-right {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+}
+.india-badge {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 5px 14px; border-radius: 20px;
+    font-size: 12px; color: #fff; font-weight: 600;
+    letter-spacing: 0.5px;
+}
+.digital-india-badge {
+    background: linear-gradient(135deg, #FF9933, #FF7700);
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 11px; color: #fff; font-weight: 700;
+    letter-spacing: 0.5px;
+}
 
-                    <!-- Key Points -->
-                    <div class="space-y-4">
-                        <div class="flex items-start gap-4 group">
-                            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-saffron/20 flex items-center justify-center mt-1 group-hover:bg-saffron/30 transition duration-300">
-                                <span class="text-lg">✓</span>
-                            </div>
-                            <div>
-                                <h3 class="text-white font-semibold mb-1">Transparent Governance</h3>
-                                <p class="text-white/60 text-sm">End-to-end tracking from complaint to resolution</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start gap-4 group">
-                            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-green-i/20 flex items-center justify-center mt-1 group-hover:bg-green-i/30 transition duration-300">
-                                <span class="text-lg">✓</span>
-                            </div>
-                            <div>
-                                <h3 class="text-white font-semibold mb-1">AI-Powered Intelligence</h3>
-                                <p class="text-white/60 text-sm">Smart prioritization for faster resolution</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start gap-4 group">
-                            <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mt-1 group-hover:bg-blue-500/30 transition duration-300">
-                                <span class="text-lg">✓</span>
-                            </div>
-                            <div>
-                                <h3 class="text-white font-semibold mb-1">Citizen Empowerment</h3>
-                                <p class="text-white/60 text-sm">Your voice, your community, your governance</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+/* ── Navigation Bar ──────────────────────────────────── */
+.gov-nav {
+    background: #1a5276;
+    border-bottom: 3px solid #FF9933;
+}
+.gov-nav ul {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; list-style: none; padding: 0 20px;
+}
+.gov-nav ul li a {
+    display: block; padding: 13px 18px;
+    color: rgba(255,255,255,0.88); text-decoration: none;
+    font-size: 13.5px; font-weight: 500;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+.gov-nav ul li a:hover, .gov-nav ul li a.active {
+    color: #fff;
+    border-bottom-color: #FF9933;
+    background: rgba(255,255,255,0.08);
+}
 
-                <!-- Right Content - Action Cards -->
-                <div class="space-y-6 animate-fade-in-right">
-                    
-                    <!-- Citizen Portal Card -->
-                    <div class="group relative overflow-hidden rounded-2xl">
-                        <div class="absolute inset-0 bg-gradient-to-br from-saffron/20 to-orange-500/20 opacity-0 group-hover:opacity-100 transition duration-500 blur-xl"></div>
-                        <div class="relative p-8 rounded-2xl backdrop-blur-xl bg-white/10 border border-white/20 group-hover:border-saffron/50 transition duration-500 shadow-2xl group-hover:shadow-2xl">
-                            
-                            <!-- Icon -->
-                            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-saffron to-orange-500 flex items-center justify-center mb-6 group-hover:scale-110 transition duration-300 shadow-lg">
-                                <span class="text-2xl">👥</span>
-                            </div>
+/* ── Hero / Banner ───────────────────────────────────── */
+.hero-banner {
+    background: linear-gradient(120deg, #eaf2fb 0%, #f4f9ff 40%, #edf7ee 100%);
+    border-bottom: 1px solid #d0dfe8;
+    padding: 60px 30px 50px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.hero-banner::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+        radial-gradient(circle at 15% 50%, rgba(26,82,118,0.05) 0%, transparent 55%),
+        radial-gradient(circle at 85% 40%, rgba(19,136,8,0.05) 0%, transparent 55%);
+}
+.hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #fff; border: 1px solid #c8daea;
+    border-radius: 30px; padding: 6px 18px;
+    font-size: 12px; font-weight: 700; color: #1a5276;
+    letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 22px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+.hero-banner h2 {
+    font-size: 2.7rem; font-weight: 800;
+    color: #1a3a6b; line-height: 1.2;
+    max-width: 760px; margin: 0 auto 14px;
+}
+.hero-banner h2 span {
+    color: #FF9933;
+}
+.hero-motto {
+    font-size: 1.25rem; font-weight: 700;
+    color: #138808; margin-bottom: 8px;
+    font-style: italic;
+}
+.hero-sub {
+    font-size: 15px; color: #555; max-width: 640px;
+    margin: 0 auto 36px; line-height: 1.7;
+}
+.hero-actions {
+    display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+}
+.btn-primary {
+    background: linear-gradient(135deg, #1a5276, #1a3a6b);
+    color: #fff; text-decoration: none;
+    padding: 13px 32px; border-radius: 6px;
+    font-size: 15px; font-weight: 600;
+    border: 2px solid transparent;
+    transition: all 0.25s ease;
+    display: inline-flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 15px rgba(26,82,118,0.35);
+}
+.btn-primary:hover {
+    background: linear-gradient(135deg, #154475, #0e2d5a);
+    box-shadow: 0 6px 22px rgba(26,82,118,0.45);
+    transform: translateY(-2px);
+}
+.btn-secondary {
+    background: #FF9933;
+    color: #fff; text-decoration: none;
+    padding: 13px 32px; border-radius: 6px;
+    font-size: 15px; font-weight: 600;
+    transition: all 0.25s ease;
+    display: inline-flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 15px rgba(255,153,51,0.35);
+}
+.btn-secondary:hover {
+    background: #e6891e;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 22px rgba(255,153,51,0.45);
+}
+.btn-outline {
+    background: #fff; color: #1a5276;
+    text-decoration: none;
+    padding: 13px 32px; border-radius: 6px;
+    font-size: 15px; font-weight: 600;
+    border: 2px solid #1a5276;
+    transition: all 0.25s ease;
+    display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-outline:hover {
+    background: #1a5276; color: #fff;
+    transform: translateY(-2px);
+}
 
-                            <!-- Content -->
-                            <h3 class="text-2xl font-bold text-white mb-2">Citizen Portal</h3>
-                            <p class="text-white/70 text-sm mb-6 leading-relaxed">
-                                Submit grievances and track progress in real-time with full transparency
-                            </p>
+/* ── Stats Bar ───────────────────────────────────────── */
+.stats-bar {
+    background: #1a3a6b;
+    padding: 0;
+}
+.stats-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-left: 1px solid rgba(255,255,255,0.1);
+}
+.stat-item {
+    padding: 24px 20px; text-align: center;
+    border-right: 1px solid rgba(255,255,255,0.1);
+    transition: background 0.2s;
+}
+.stat-item:hover { background: rgba(255,255,255,0.06); }
+.stat-num { font-size: 2rem; font-weight: 800; color: #FF9933; display: block; }
+.stat-label { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 4px; font-weight: 500; }
 
-                            <!-- Features -->
-                            <div class="space-y-3 mb-8">
-                                <div class="flex items-center gap-2 text-sm text-white/80">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-saffron"></span>
-                                    <span>24/7 Access</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-sm text-white/80">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-saffron"></span>
-                                    <span>Real-time Updates</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-sm text-white/80">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-saffron"></span>
-                                    <span>No Registration Required</span>
-                                </div>
-                            </div>
+/* ── Main Content ────────────────────────────────────── */
+.main-content {
+    max-width: 1200px; margin: 0 auto;
+    padding: 50px 24px 60px;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 40px;
+}
 
-                            <!-- Button -->
-                            <a href="/public/" 
-                               class="w-full inline-flex items-center justify-center py-3 px-6 rounded-xl bg-gradient-to-r from-saffron to-orange-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold transition duration-300 shadow-lg hover:shadow-2xl transform group-hover:scale-105">
-                                Access Dashboard
-                                <span class="ml-2">→</span>
-                            </a>
-                        </div>
-                    </div>
+/* ── Section Headings ────────────────────────────────── */
+.section-heading {
+    font-size: 1.2rem; font-weight: 700; color: #1a3a6b;
+    border-left: 4px solid #FF9933;
+    padding-left: 12px; margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.section-heading a { font-size: 12px; font-weight: 500; color: #1a5276; text-decoration: none; }
+.section-heading a:hover { text-decoration: underline; }
 
-                    <!-- Government Official Card -->
-                    <div class="group relative overflow-hidden rounded-2xl">
-                        <div class="absolute inset-0 bg-gradient-to-br from-green-i/20 to-emerald-500/20 opacity-0 group-hover:opacity-100 transition duration-500 blur-xl"></div>
-                        <div class="relative p-8 rounded-2xl backdrop-blur-xl bg-white/10 border border-white/20 group-hover:border-green-i/50 transition duration-500 shadow-2xl">
-                            
-                            <!-- Icon -->
-                            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-green-i to-emerald-600 flex items-center justify-center mb-6 group-hover:scale-110 transition duration-300 shadow-lg">
-                                <span class="text-2xl">🏛️</span>
-                            </div>
+/* ── Services Grid ───────────────────────────────────── */
+.services-section { margin-bottom: 40px; }
+.services-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+}
+.service-card {
+    background: #fff;
+    border: 1px solid #dce8f2;
+    border-radius: 10px;
+    padding: 22px 16px;
+    text-align: center;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    position: relative; overflow: hidden;
+}
+.service-card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, #1a5276, #FF9933);
+    transform: scaleX(0); transition: transform 0.3s ease;
+}
+.service-card:hover::before { transform: scaleX(1); }
+.service-card:hover {
+    border-color: #a8c8e8;
+    box-shadow: 0 8px 28px rgba(26,82,118,0.12);
+    transform: translateY(-4px);
+}
+.service-icon {
+    width: 54px; height: 54px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.7rem;
+    background: linear-gradient(135deg, #eaf2fb, #dce8f2);
+    transition: transform 0.25s ease;
+}
+.service-card:hover .service-icon { transform: scale(1.1); }
+.service-card h3 { font-size: 13px; font-weight: 700; color: #1a3a6b; line-height: 1.3; }
+.service-card p { font-size: 11.5px; color: #666; line-height: 1.5; }
 
-                            <!-- Content -->
-                            <h3 class="text-2xl font-bold text-white mb-2">Government Portal</h3>
-                            <p class="text-white/70 text-sm mb-6 leading-relaxed">
-                                Manage grievances with AI insights and advanced analytics tools
-                            </p>
+/* ── How It Works ────────────────────────────────────── */
+.how-section { background: #f7fafd; border-radius: 12px; padding: 28px; margin-bottom: 40px; border: 1px solid #dce8f2; }
+.steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px; }
+.step-card {
+    background: #fff; border-radius: 10px;
+    padding: 22px 18px; text-align: center;
+    border: 1px solid #dce8f2;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+.step-card:hover { box-shadow: 0 6px 20px rgba(26,82,118,0.1); transform: translateY(-3px); }
+.step-num {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, #1a5276, #1a3a6b);
+    color: #fff; font-weight: 800; font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 12px;
+    box-shadow: 0 4px 12px rgba(26,82,118,0.3);
+}
+.step-card h4 { font-size: 13.5px; font-weight: 700; color: #1a3a6b; margin-bottom: 6px; }
+.step-card p { font-size: 12px; color: #666; line-height: 1.6; }
 
-                            <!-- Features -->
-                            <div class="space-y-3 mb-8">
-                                <div class="flex items-center gap-2 text-sm text-white/80">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-green-i"></span>
-                                    <span>AI Prioritization</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-sm text-white/80">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-green-i"></span>
-                                    <span>Advanced Analytics</span>
-                                </div>
-                                <div class="flex items-center gap-2 text-sm text-white/80">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-green-i"></span>
-                                    <span>Secure Access</span>
-                                </div>
-                            </div>
+/* ── RTicker / Announcements ─────────────────────────── */
+.sidebar { display: flex; flex-direction: column; gap: 24px; }
+.sidebar-card {
+    background: #fff; border: 1px solid #dce8f2; border-radius: 10px;
+    overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.sidebar-card-header {
+    background: linear-gradient(135deg, #1a5276, #1a3a6b);
+    color: #fff; padding: 12px 16px;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.3px;
+    display: flex; align-items: center; gap: 8px;
+}
+.sidebar-card-body { padding: 16px; }
 
-                            <!-- Button -->
-                            <a href="/go-login/" 
-                               class="w-full inline-flex items-center justify-center py-3 px-6 rounded-xl bg-gradient-to-r from-green-i to-emerald-600 hover:from-green-700 hover:to-teal-700 text-white font-semibold transition duration-300 shadow-lg hover:shadow-2xl transform group-hover:scale-105">
-                                Official Login
-                                <span class="ml-2">→</span>
-                            </a>
-                            <a href="/go-register/" class="mt-4 w-full text-center text-sm text-white/70 hover:text-green-i transition duration-200 font-medium">
-                                Request Access for Officials
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+/* ── Portal Cards (Citizen & Official) ──────────────── */
+.portal-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.portal-card {
+    border-radius: 10px; overflow: hidden;
+    border: 1px solid #dce8f2;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    text-decoration: none; color: inherit;
+    display: block;
+}
+.portal-card:hover { box-shadow: 0 8px 28px rgba(0,0,0,0.12); transform: translateY(-4px); }
+.portal-card-head {
+    padding: 20px 18px; color: #fff;
+    display: flex; align-items: center; gap: 12px;
+}
+.portal-card-head .icon { font-size: 2.2rem; }
+.portal-card-head h3 { font-size: 1.05rem; font-weight: 700; }
+.portal-card-head p { font-size: 11.5px; opacity: 0.85; margin-top: 2px; }
+.portal-card-foot {
+    padding: 14px 18px; background: #f7fafd; border-top: 1px solid #dce8f2;
+    font-size: 12.5px; font-weight: 600;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.citizen-card .portal-card-head { background: linear-gradient(135deg, #d4500a, #FF9933); }
+.citizen-card .portal-card-foot { color: #a04008; }
+.official-card .portal-card-head { background: linear-gradient(135deg, #0b6b1a, #138808); }
+.official-card .portal-card-foot { color: #0b6b1a; }
 
-            <!-- Stats Bar at Bottom -->
-            <div class="mt-16 grid grid-cols-3 md:grid-cols-3 gap-4 animate-fade-in-up delay-500">
-                <div class="text-center p-4 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm hover:border-white/20 transition duration-300">
-                    <div class="text-2xl md:text-3xl font-bold text-saffron">12.3K+</div>
-                    <p class="text-white/60 text-xs md:text-sm mt-2 font-medium">Complaints Registered</p>
-                </div>
-                <div class="text-center p-4 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm hover:border-white/20 transition duration-300">
-                    <div class="text-2xl md:text-3xl font-bold text-green-i">72%</div>
-                    <p class="text-white/60 text-xs md:text-sm mt-2 font-medium">Resolution Rate</p>
-                </div>
-                <div class="text-center p-4 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm hover:border-white/20 transition duration-300">
-                    <div class="text-2xl md:text-3xl font-bold text-blue-400">120+</div>
-                    <p class="text-white/60 text-xs md:text-sm mt-2 font-medium">Departments Connected</p>
-                </div>
-            </div>
-        </div>
-    </div>
+/* ── Announcement Ticker ─────────────────────────────── */
+.announcement-list { list-style: none; }
+.announcement-list li {
+    padding: 10px 0; border-bottom: 1px dashed #e0e8f0;
+    font-size: 12.5px; color: #333; line-height: 1.5;
+    display: flex; gap: 8px;
+}
+.announcement-list li:last-child { border-bottom: none; }
+.announcement-list li::before { content: '▶'; color: #FF9933; font-size: 9px; margin-top: 3px; flex-shrink: 0; }
+.new-badge {
+    background: #e74c3c; color: #fff; font-size: 9px;
+    font-weight: 700; padding: 1px 5px; border-radius: 3px;
+    vertical-align: middle; margin-left: 4px;
+}
 
-    <!-- Bottom Tricolor Bar - Enhanced -->
-    <div class="h-1 flex w-full shadow-2xl">
-        <div class="flex-1 bg-saffron"></div>
-        <div class="flex-1 bg-white"></div>
-        <div class="flex-1 bg-green-i"></div>
+/* ── Quick Links Sidebar ─────────────────────────────── */
+.quick-links { list-style: none; }
+.quick-links li a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 0; border-bottom: 1px solid #eef2f6;
+    color: #1a5276; text-decoration: none; font-size: 12.5px; font-weight: 500;
+    transition: color 0.2s;
+}
+.quick-links li:last-child a { border-bottom: none; }
+.quick-links li a:hover { color: #FF9933; }
+.quick-links li a::before { content: '→'; font-weight: 700; }
+
+/* ── Features Ribbon ─────────────────────────────────── */
+.features-ribbon {
+    background: linear-gradient(135deg, #eaf2fb 0%, #f8f4ed 100%);
+    border-top: 1px solid #d0dfe8; border-bottom: 1px solid #d0dfe8;
+}
+.features-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    padding: 0 20px;
+}
+.feature-item {
+    padding: 28px 20px; text-align: center;
+    border-right: 1px solid #d0dfe8;
+    transition: background 0.2s;
+}
+.feature-item:last-child { border-right: none; }
+.feature-item:hover { background: rgba(255,255,255,0.6); }
+.feature-icon { font-size: 2rem; margin-bottom: 10px; }
+.feature-item h4 { font-size: 13.5px; font-weight: 700; color: #1a3a6b; margin-bottom: 5px; }
+.feature-item p { font-size: 11.5px; color: #666; line-height: 1.5; }
+
+/* ── Mission Quote ───────────────────────────────────── */
+.mission-section {
+    background: linear-gradient(135deg, #1a3a6b 0%, #0e2d5a 100%);
+    color: #fff; padding: 60px 24px; text-align: center;
+    position: relative; overflow: hidden;
+}
+.mission-section::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle at 20% 50%, rgba(255,153,51,0.1) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 50%, rgba(19,136,8,0.1) 0%, transparent 50%);
+}
+.mission-inner { max-width: 800px; margin: 0 auto; position: relative; }
+.mission-motto { font-size: 2rem; font-weight: 800; color: #FF9933; margin-bottom: 10px; }
+.mission-en { font-size: 1.1rem; color: rgba(255,255,255,0.75); font-style: italic; margin-bottom: 24px; }
+.mission-desc { font-size: 15px; color: rgba(255,255,255,0.8); line-height: 1.8; margin-bottom: 32px; }
+
+/* ── Footer ──────────────────────────────────────────── */
+.gov-footer {
+    background: #0e2040; color: rgba(255,255,255,0.75);
+    padding: 48px 24px 24px;
+}
+.footer-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px;
+    margin-bottom: 36px;
+}
+.footer-brand h3 { font-size: 1.3rem; font-weight: 800; color: #fff; margin-bottom: 10px; }
+.footer-brand p { font-size: 12.5px; line-height: 1.7; color: rgba(255,255,255,0.6); }
+.footer-col h4 { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid #FF9933; display: inline-block; }
+.footer-col ul { list-style: none; }
+.footer-col ul li { margin-bottom: 8px; }
+.footer-col ul li a { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 12.5px; transition: color 0.2s; }
+.footer-col ul li a:hover { color: #FF9933; }
+.footer-bottom {
+    max-width: 1200px; margin: 0 auto;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px; color: rgba(255,255,255,0.45);
+    flex-wrap: wrap; gap: 10px;
+}
+.footer-badges { display: flex; gap: 10px; }
+.footer-badge {
+    padding: 5px 12px; border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.2);
+    font-size: 11px; color: rgba(255,255,255,0.65); font-weight: 600;
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 900px) {
+    .main-content { grid-template-columns: 1fr; }
+    .stats-inner { grid-template-columns: repeat(2, 1fr); }
+    .features-inner { grid-template-columns: repeat(2, 1fr); }
+    .footer-inner { grid-template-columns: 1fr 1fr; }
+    .hero-banner h2 { font-size: 2rem; }
+}
+@media (max-width: 600px) {
+    .gov-header { flex-direction: column; align-items: flex-start; }
+    .header-right { align-items: flex-start; }
+    .gov-nav ul { flex-wrap: wrap; }
+    .services-grid { grid-template-columns: repeat(2, 1fr); }
+    .steps-grid { grid-template-columns: 1fr; }
+    .portal-cards { grid-template-columns: 1fr; }
+    .stats-inner { grid-template-columns: 1fr 1fr; }
+    .features-inner { grid-template-columns: 1fr; }
+    .footer-inner { grid-template-columns: 1fr; }
+    .hero-banner h2 { font-size: 1.7rem; }
+    .hero-actions { flex-direction: column; align-items: center; }
+}
+
+/* ── Animations ──────────────────────────────────────── */
+@keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+.fade-up { animation: fadeUp 0.7s ease-out forwards; }
+.fade-up-d1 { animation: fadeUp 0.7s 0.1s ease-out both; }
+.fade-up-d2 { animation: fadeUp 0.7s 0.2s ease-out both; }
+.fade-up-d3 { animation: fadeUp 0.7s 0.3s ease-out both; }
+.fade-up-d4 { animation: fadeUp 0.7s 0.4s ease-out both; }
+</style>
+
+<!-- ── Tricolor Strip ─────────────────────────────── -->
+<div class="tricolor-bar">
+    <div class="saffron"></div>
+    <div class="white"></div>
+    <div class="green"></div>
+</div>
+
+<!-- ── Utility Bar ───────────────────────────────── -->
+<div class="utility-bar">
+    <span class="skip-links">🇮🇳 A Digital India Initiative &nbsp;|&nbsp; भारत सरकार</span>
+    <div>
+        <a href="/login/">Citizen Portal</a>
+        <a href="/go-login/">Officials Login</a>
+        <a href="/register/">File Complaint</a>
     </div>
 </div>
 
+<!-- ── Main Government Header ────────────────────── -->
+<div class="gov-header">
+    <div class="emblem-wrap">🏛️</div>
+    <div class="header-text">
+        <span class="portal-name-hi">स्मार्ट सिटी शिकायत प्रबंधन प्रणाली</span>
+        <h1>Smart City Feedback Management System</h1>
+        <div class="subtitle">Government of India &nbsp;•&nbsp; Ministry of Housing & Urban Affairs &nbsp;•&nbsp; SCFMS</div>
+    </div>
+    <div class="header-right">
+        <span class="india-badge">🇮🇳 Government of India</span>
+        <span class="digital-india-badge">⚡ Digital India</span>
+    </div>
+</div>
 
-<!-- ============================= -->
-<!-- NEW LOWER SECTION BEGINS HERE -->
-<!-- ============================= -->
+<!-- ── Navigation ─────────────────────────────────── -->
+<nav class="gov-nav">
+    <ul>
+        <li><a href="/" class="active">Home</a></li>
+        <li><a href="/login/">Citizen Login</a></li>
+        <li><a href="/register/">Citizen Register</a></li>
+        <li><a href="/go-login/">Government Portal</a></li>
+        <li><a href="/login/">Citizen Login</a></li>
+        <li><a href="/register/">Register</a></li>
+    </ul>
+</nav>
 
-<!-- Why SCFMS - Features Section -->
-<section class="relative bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white py-28 overflow-hidden">
-    <!-- Background Elements -->
-    <div class="absolute top-0 left-10 w-96 h-96 bg-saffron/5 rounded-full filter blur-3xl -z-10"></div>
-    <div class="absolute bottom-0 right-10 w-96 h-96 bg-green-i/5 rounded-full filter blur-3xl -z-10"></div>
-    <div class="absolute inset-0 opacity-5" style="background-image: linear-gradient(90deg, #fff 1px, transparent 1px), linear-gradient(#fff 1px, transparent 1px); background-size: 50px 50px; -z-index: -1;"></div>
-    
-    <div class="max-w-6xl mx-auto px-6 relative z-10">
-        <div class="text-center mb-20 animate-fade-in-down">
-            <div class="inline-block mb-4 px-6 py-2 rounded-lg bg-saffron/20 text-saffron font-bold text-sm tracking-widest border border-saffron/40 backdrop-blur-sm">CORE FEATURES</div>
-            <h2 class="text-5xl md:text-6xl font-bold mb-4 text-white">Why SCFMS?</h2>
-            <p class="text-lg text-white/70 mb-12 max-w-3xl mx-auto leading-relaxed">
-                A comprehensive platform combining <span class="text-saffron font-semibold">transparency</span>, <span class="text-green-i font-semibold">intelligence</span>, and <span class="text-blue-400 font-semibold">accountability</span>
-            </p>
-        </div>
-
-        <div class="grid md:grid-cols-3 gap-8">
-            <!-- Card 1 - Transparency -->
-            <div class="group relative animate-fade-in-left" style="animation-delay: 0.1s">
-                <div class="absolute inset-0 bg-gradient-to-br from-saffron/30 to-orange-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-2xl"></div>
-                <div class="relative p-10 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 group-hover:border-saffron/50 transition duration-500 group-hover:shadow-2xl h-full hover:translate-y-[-8px]">
-                    <div class="w-16 h-16 bg-gradient-to-br from-saffron to-orange-500 rounded-xl flex items-center justify-center text-white text-3xl mb-6 group-hover:scale-110 transition duration-300 shadow-lg">
-                        👁️
-                    </div>
-                    <h3 class="text-2xl font-bold mb-3 text-white">Complete Transparency</h3>
-                    <p class="text-white/70 leading-relaxed">Real-time tracking from submission to resolution with complete audit trails. Every step is documented and accessible.</p>
-                    <div class="mt-6 h-1 w-8 bg-gradient-to-r from-saffron to-orange-500 rounded-full"></div>
-                </div>
-            </div>
-
-            <!-- Card 2 - AI Prioritization -->
-            <div class="group relative animate-fade-in-up" style="animation-delay: 0.2s">
-                <div class="absolute inset-0 bg-gradient-to-br from-green-i/30 to-emerald-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-2xl"></div>
-                <div class="relative p-10 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 group-hover:border-green-i/50 transition duration-500 group-hover:shadow-2xl h-full hover:translate-y-[-8px]">
-                    <div class="w-16 h-16 bg-gradient-to-br from-green-i to-emerald-600 rounded-xl flex items-center justify-center text-white text-3xl mb-6 group-hover:scale-110 transition duration-300 shadow-lg">
-                        🧠
-                    </div>
-                    <h3 class="text-2xl font-bold mb-3 text-white">AI-Powered Intelligence</h3>
-                    <p class="text-white/70 leading-relaxed">Machine learning algorithms analyze and prioritize grievances by urgency and impact, ensuring faster and smarter resolutions.</p>
-                    <div class="mt-6 h-1 w-8 bg-gradient-to-r from-green-i to-emerald-600 rounded-full"></div>
-                </div>
-            </div>
-
-            <!-- Card 3 - Citizen Empowerment -->
-            <div class="group relative animate-fade-in-right" style="animation-delay: 0.3s">
-                <div class="absolute inset-0 bg-gradient-to-br from-blue-400/30 to-blue-600/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-2xl"></div>
-                <div class="relative p-10 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 group-hover:border-blue-400/50 transition duration-500 group-hover:shadow-2xl h-full hover:translate-y-[-8px]">
-                    <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center text-white text-3xl mb-6 group-hover:scale-110 transition duration-300 shadow-lg">
-                        🌟
-                    </div>
-                    <h3 class="text-2xl font-bold mb-3 text-white">Citizen Empowerment</h3>
-                    <p class="text-white/70 leading-relaxed">Easy-to-use portal for citizens to report issues, track progress, and hold government accountable. Your voice matters.</p>
-                    <div class="mt-6 h-1 w-8 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"></div>
-                </div>
-            </div>
-        </div>
+<!-- ── Hero Banner ────────────────────────────────── -->
+<section class="hero-banner">
+    <div class="hero-eyebrow fade-up">
+        🏙️ Smart Governance &nbsp;•&nbsp; Transparent &nbsp;•&nbsp; Accountable
+    </div>
+    <h2 class="fade-up-d1">Digital Grievance Resolution for <span>Smart Cities</span></h2>
+    <p class="hero-motto fade-up-d1">"सेवा परमॊ धर्मः" — Service is the Highest Duty</p>
+    <p class="hero-sub fade-up-d2">
+        Submit complaints, track resolutions, and hold government accountable —
+        all through one unified, AI-powered platform built for every citizen of India.
+    </p>
+    <div class="hero-actions fade-up-d3">
+        <a href="/login/" class="btn-secondary">📋 Citizen Login</a>
+        <a href="/register/" class="btn-primary">📝 Register to File Complaint</a>
+        <a href="/go-login/" class="btn-outline">🏛️ Official Login</a>
     </div>
 </section>
 
-<!-- How It Works Section -->
-<section class="relative bg-gradient-to-b from-slate-50 to-white text-slate-900 py-28 overflow-hidden">
-    <!-- Background Elements -->
-    <div class="absolute top-0 left-0 w-96 h-96 bg-saffron/5 rounded-full filter blur-3xl -z-10"></div>
-    <div class="absolute bottom-0 right-0 w-96 h-96 bg-green-i/5 rounded-full filter blur-3xl -z-10"></div>
-    
-    <div class="max-w-6xl mx-auto px-6 relative z-10">
-        <div class="text-center mb-20 animate-fade-in-down">
-            <div class="inline-block mb-4 px-6 py-2 rounded-lg bg-blue-100 text-blue-700 font-bold text-sm tracking-widest border border-blue-300">PROCESS</div>
-            <h2 class="text-5xl md:text-6xl font-bold mb-4 text-slate-900">How It Works</h2>
-            <p class="text-lg text-slate-600 mb-12 max-w-3xl mx-auto leading-relaxed">A seamless system designed to connect citizens and government officials in a transparent, efficient grievance resolution process.</p>
+<!-- ── Stats Bar ──────────────────────────────────── -->
+<div class="stats-bar">
+    <div class="stats-inner">
+        <div class="stat-item fade-up-d1">
+            <span class="stat-num" id="stat-complaints">12,300+</span>
+            <div class="stat-label">Complaints Registered</div>
         </div>
-
-        <!-- Steps Grid -->
-        <div class="grid md:grid-cols-3 gap-8 mb-16">
-            <!-- Step 1 -->
-            <div class="relative group animate-fade-in-left" style="animation-delay: 0.1s">
-                <div class="absolute inset-0 bg-gradient-to-br from-saffron/10 to-orange-300/10 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-xl"></div>
-                <div class="relative p-8 rounded-2xl bg-white border-2 border-slate-200 group-hover:border-saffron/50 transition duration-300 group-hover:shadow-xl hover:translate-y-[-4px]">
-                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-saffron to-orange-500 text-white flex items-center justify-center text-2xl font-bold mb-6 shadow-lg">
-                        1
-                    </div>
-                    <h3 class="text-xl font-bold text-slate-900 mb-2">Submit Grievance</h3>
-                    <p class="text-slate-600 text-sm leading-relaxed">Citizens report issues through an intuitive mobile-friendly interface. No complex forms, just your concern.</p>
-                </div>
-            </div>
-
-            <!-- Step 2 -->
-            <div class="relative group animate-fade-in-up" style="animation-delay: 0.2s">
-                <div class="absolute inset-0 bg-gradient-to-br from-green-i/10 to-emerald-300/10 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-xl"></div>
-                <div class="relative p-8 rounded-2xl bg-white border-2 border-slate-200 group-hover:border-green-i/50 transition duration-300 group-hover:shadow-xl hover:translate-y-[-4px]">
-                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-green-i to-emerald-600 text-white flex items-center justify-center text-2xl font-bold mb-6 shadow-lg">
-                        2
-                    </div>
-                    <h3 class="text-xl font-bold text-slate-900 mb-2">AI Analysis & Priority</h3>
-                    <p class="text-slate-600 text-sm leading-relaxed">Our AI system analyzes severity, category, and location to prioritize grievances efficiently.</p>
-                </div>
-            </div>
-
-            <!-- Step 3 -->
-            <div class="relative group animate-fade-in-right" style="animation-delay: 0.3s">
-                <div class="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-blue-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-xl"></div>
-                <div class="relative p-8 rounded-2xl bg-white border-2 border-slate-200 group-hover:border-blue-400/50 transition duration-300 group-hover:shadow-xl hover:translate-y-[-4px]">
-                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-white flex items-center justify-center text-2xl font-bold mb-6 shadow-lg">
-                        3
-                    </div>
-                    <h3 class="text-xl font-bold text-slate-900 mb-2">Resolution & Tracking</h3>
-                    <p class="text-slate-600 text-sm leading-relaxed">Government officials manage and resolve grievances. Citizens receive real-time updates every step.</p>
-                </div>
-            </div>
+        <div class="stat-item fade-up-d2">
+            <span class="stat-num" id="stat-resolved">72%</span>
+            <div class="stat-label">Resolution Rate</div>
         </div>
-
-        <!-- Video Section -->
-        <div class="relative max-w-4xl mx-auto animate-fade-in-up" style="animation-delay: 0.4s">
-            <div class="absolute inset-0 bg-gradient-to-r from-saffron/30 via-green-i/20 to-blue-400/30 rounded-3xl opacity-30 blur-2xl"></div>
-            <div class="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-slate-300 hover:border-slate-400 transition duration-300">
-                <iframe class="w-full aspect-video"
-                        src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-                        title="SCFMS Demo Video"
-                        allowfullscreen></iframe>
-            </div>
+        <div class="stat-item fade-up-d3">
+            <span class="stat-num">25,000+</span>
+            <div class="stat-label">Active Citizens</div>
+        </div>
+        <div class="stat-item fade-up-d4">
+            <span class="stat-num">120+</span>
+            <div class="stat-label">Departments Connected</div>
         </div>
     </div>
-</section>
+</div>
 
-<!-- Live Stats Section -->
-<section class="relative bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800 text-white py-28 overflow-hidden">
-    <!-- Background Elements -->
-    <div class="absolute inset-0 opacity-5" style="background-image: linear-gradient(90deg, #fff 1px, transparent 1px), linear-gradient(#fff 1px, transparent 1px); background-size: 50px 50px; -z-index: 0;"></div>
-    <div class="absolute top-0 left-20 w-96 h-96 bg-saffron/10 rounded-full filter blur-3xl animate-float"></div>
-    <div class="absolute bottom-0 right-20 w-96 h-96 bg-green-i/10 rounded-full filter blur-3xl animate-float" style="animation-delay: 3s;"></div>
-    
-    <div class="max-w-6xl mx-auto px-6 relative z-10">
-        <div class="text-center mb-20 animate-fade-in-down">
-            <div class="inline-block mb-4 px-6 py-2 rounded-lg bg-saffron/30 text-saffron font-bold text-sm tracking-widest border border-saffron/50 backdrop-blur-sm">STATISTICS</div>
-            <h2 class="text-5xl md:text-6xl font-bold mb-4 text-white">Our Impact</h2>
-            <p class="text-lg text-white/70 mb-12">Transforming governance, one complaint at a time.</p>
+<!-- ── Features Ribbon ────────────────────────────── -->
+<div class="features-ribbon">
+    <div class="features-inner">
+        <div class="feature-item fade-up-d1">
+            <div class="feature-icon">🔍</div>
+            <h4>Transparent Tracking</h4>
+            <p>Follow every step of your complaint in real-time with complete audit trails.</p>
         </div>
-        
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <!-- Stat 1 -->
-            <div class="group relative animate-fade-in-left" style="animation-delay: 0.1s">
-                <div class="absolute inset-0 bg-gradient-to-br from-saffron/30 to-orange-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-2xl"></div>
-                <div class="relative p-8 text-center rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 group-hover:border-saffron/50 transition duration-300 group-hover:shadow-2xl hover:translate-y-[-8px]">
-                    <div class="text-5xl md:text-6xl font-black text-saffron mb-3 group-hover:scale-110 transition duration-300">12.3K+</div>
-                    <p class="text-white/80 font-semibold text-sm md:text-base">Complaints Registered</p>
-                    <div class="mt-4 h-1 w-8 bg-gradient-to-r from-saffron to-orange-500 rounded-full mx-auto"></div>
-                </div>
-            </div>
-
-            <!-- Stat 2 -->
-            <div class="group relative animate-fade-in-up" style="animation-delay: 0.2s">
-                <div class="absolute inset-0 bg-gradient-to-br from-green-i/30 to-emerald-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-2xl"></div>
-                <div class="relative p-8 text-center rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 group-hover:border-green-i/50 transition duration-300 group-hover:shadow-2xl hover:translate-y-[-8px]">
-                    <div class="text-5xl md:text-6xl font-black text-green-i mb-3 group-hover:scale-110 transition duration-300">72%</div>
-                    <p class="text-white/80 font-semibold text-sm md:text-base">Resolution Rate</p>
-                    <div class="mt-4 h-1 w-8 bg-gradient-to-r from-green-i to-emerald-600 rounded-full mx-auto"></div>
-                </div>
-            </div>
-
-            <!-- Stat 3 -->
-            <div class="group relative animate-fade-in-up" style="animation-delay: 0.3s">
-                <div class="absolute inset-0 bg-gradient-to-br from-blue-400/30 to-blue-600/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-2xl"></div>
-                <div class="relative p-8 text-center rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 group-hover:border-blue-400/50 transition duration-300 group-hover:shadow-2xl hover:translate-y-[-8px]">
-                    <div class="text-5xl md:text-6xl font-black text-blue-400 mb-3 group-hover:scale-110 transition duration-300">25K+</div>
-                    <p class="text-white/80 font-semibold text-sm md:text-base">Active Citizens</p>
-                    <div class="mt-4 h-1 w-8 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full mx-auto"></div>
-                </div>
-            </div>
-
-            <!-- Stat 4 -->
-            <div class="group relative animate-fade-in-right" style="animation-delay: 0.4s">
-                <div class="absolute inset-0 bg-gradient-to-br from-purple-400/30 to-purple-600/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-2xl"></div>
-                <div class="relative p-8 text-center rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 group-hover:border-purple-400/50 transition duration-300 group-hover:shadow-2xl hover:translate-y-[-8px]">
-                    <div class="text-5xl md:text-6xl font-black text-purple-400 mb-3 group-hover:scale-110 transition duration-300">120+</div>
-                    <p class="text-white/80 font-semibold text-sm md:text-base">Departments</p>
-                    <div class="mt-4 h-1 w-8 bg-gradient-to-r from-purple-400 to-purple-600 rounded-full mx-auto"></div>
-                </div>
-            </div>
+        <div class="feature-item fade-up-d2">
+            <div class="feature-icon">🧠</div>
+            <h4>AI Prioritization</h4>
+            <p>Machine learning ranks complaints by severity for faster, smarter resolutions.</p>
+        </div>
+        <div class="feature-item fade-up-d3">
+            <div class="feature-icon">🔔</div>
+            <h4>Real-Time Alerts</h4>
+            <p>Instant notifications for every status change — from pending to resolved.</p>
+        </div>
+        <div class="feature-item fade-up-d4">
+            <div class="feature-icon">📸</div>
+            <h4>Photo Evidence</h4>
+            <p>Officials attach resolution proof so citizens receive verified confirmation.</p>
         </div>
     </div>
-</section>
+</div>
 
-<!-- About / Mission Section -->
-<section class="relative bg-gradient-to-b from-slate-50 to-white text-slate-900 py-28 overflow-hidden">
-    <!-- Background Elements -->
-    <div class="absolute top-0 right-0 w-96 h-96 bg-saffron/5 rounded-full filter blur-3xl -z-10"></div>
-    <div class="absolute bottom-0 left-0 w-96 h-96 bg-green-i/5 rounded-full filter blur-3xl -z-10"></div>
-    
-    <div class="max-w-5xl mx-auto px-6 relative z-10">
-        <div class="text-center mb-16 animate-fade-in-down">
-            <div class="inline-block mb-4 px-6 py-2 rounded-lg bg-green-i/20 text-green-i font-bold text-sm tracking-widest border border-green-i/40">MISSION</div>
-            <h2 class="text-5xl md:text-6xl font-bold mb-4 text-slate-900">About SCFMS</h2>
-            <p class="text-lg text-slate-600">Understanding our vision and commitment</p>
-        </div>
-        
-        <div class="grid md:grid-cols-2 gap-12 items-center animate-fade-in-up" style="animation-delay: 0.2s">
-            <!-- Left Content -->
-            <div class="space-y-6">
-                <div class="space-y-4">
-                    <h3 class="text-3xl font-bold text-slate-900 mb-6">Smart Governance for Modern India</h3>
-                    
-                    <p class="text-lg text-slate-700 leading-relaxed">
-                        The <span class="font-bold text-saffron">Smart City Feedback Management System (SCFMS)</span> is a digital initiative under the <span class="font-bold">Digital India Program</span> designed to transform how citizens and governments interact.
-                    </p>
-                    
-                    <p class="text-lg text-slate-700 leading-relaxed">
-                        We bridge communication gaps through transparency, empower citizens with voice, and equip government officials with AI-driven insights for smarter decision-making.
-                    </p>
-                </div>
+<!-- ── Main Content Area ──────────────────────────── -->
+<div class="main-content">
 
-                <!-- Mission Points -->
-                <div class="space-y-4 pt-6">
-                    <div class="flex gap-4 group">
-                        <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-saffron/20 flex items-center justify-center group-hover:bg-saffron/30 transition duration-300">
-                            <span class="text-lg">🎯</span>
-                        </div>
+    <!-- Left Column -->
+    <div>
+        <!-- Portal Access Cards -->
+        <div class="services-section">
+            <div class="section-heading">🚪 Portal Access</div>
+            <div class="portal-cards">
+                <a href="/login/" class="portal-card citizen-card fade-up-d1">
+                    <div class="portal-card-head">
+                        <div class="icon">👥</div>
                         <div>
-                            <h4 class="font-bold text-slate-900 mb-1">Transparency</h4>
-                            <p class="text-slate-600 text-sm">Every grievance tracked end-to-end with complete audit trails</p>
+                            <h3>Citizen Portal</h3>
+                            <p>Submit & track your complaints</p>
                         </div>
                     </div>
-                    <div class="flex gap-4 group">
-                        <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-green-i/20 flex items-center justify-center group-hover:bg-green-i/30 transition duration-300">
-                            <span class="text-lg">⚡</span>
-                        </div>
+                    <div class="portal-card-foot">
+                        Login to Continue <span>→</span>
+                    </div>
+                </a>
+                <a href="/go-login/" class="portal-card official-card fade-up-d2">
+                    <div class="portal-card-head">
+                        <div class="icon">🏛️</div>
                         <div>
-                            <h4 class="font-bold text-slate-900 mb-1">Efficiency</h4>
-                            <p class="text-slate-600 text-sm">AI-powered prioritization for faster resolutions</p>
+                            <h3>Government Portal</h3>
+                            <p>Manage & resolve complaints</p>
                         </div>
                     </div>
-                    <div class="flex gap-4 group">
-                        <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-400/20 flex items-center justify-center group-hover:bg-blue-400/30 transition duration-300">
-                            <span class="text-lg">👥</span>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-slate-900 mb-1">Empowerment</h4>
-                            <p class="text-slate-600 text-sm">Citizens have a voice in governance decisions</p>
-                        </div>
+                    <div class="portal-card-foot">
+                        Official Login <span>→</span>
                     </div>
-                </div>
+                </a>
             </div>
+        </div>
 
-            <!-- Right Content - Featured Box -->
-            <div class="relative group">
-                <div class="absolute inset-0 bg-gradient-to-br from-saffron/20 to-green-i/20 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-2xl"></div>
-                <div class="relative p-10 rounded-2xl bg-gradient-to-br from-white to-slate-50 border-2 border-slate-300 group-hover:border-saffron/50 transition duration-500 group-hover:shadow-2xl">
-                    <div class="text-5xl mb-6 font-bold text-transparent bg-gradient-to-r from-saffron via-white to-green-i bg-clip-text">सेवा परमॊ धर्मः</div>
-                    <p class="text-slate-600 text-lg mb-6 leading-relaxed italic">"Service is the highest form of duty"</p>
-                    
-                    <div class="h-1 w-16 bg-gradient-to-r from-saffron to-green-i rounded-full mb-6"></div>
-                    
-                    <p class="text-slate-700 leading-relaxed font-medium mb-6">
-                        This ancient Indian principle guides our mission. We are committed to serving citizens and strengthening governance through transparent, intelligent, and accountable systems.
-                    </p>
-                    
-                    <div class="grid grid-cols-3 gap-4 pt-6 border-t border-slate-300">
-                        <div class="text-center">
-                            <div class="text-3xl font-black text-saffron">🇮🇳</div>
-                            <p class="text-xs text-slate-600 mt-2 font-semibold">Digital India</p>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-3xl font-black text-green-i">🏙️</div>
-                            <p class="text-xs text-slate-600 mt-2 font-semibold">Smart Cities</p>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-3xl font-black text-blue-600">⚖️</div>
-                            <p class="text-xs text-slate-600 mt-2 font-semibold">Governance</p>
-                        </div>
-                    </div>
+        <!-- Services Grid -->
+        <div class="services-section">
+            <div class="section-heading">
+                🛠️ Our Services
+                <a href="/login/">Citizen Access →</a>
+            </div>
+            <div class="services-grid">
+                <a href="/register/" class="service-card fade-up-d1">
+                    <div class="service-icon">🛣️</div>
+                    <h3>Roads &amp; Potholes</h3>
+                    <p>Report road damage, potholes &amp; infrastructure issues</p>
+                </a>
+                <a href="/register/" class="service-card fade-up-d2">
+                    <div class="service-icon">🗑️</div>
+                    <h3>Garbage &amp; Waste</h3>
+                    <p>Report uncollected waste &amp; sanitation problems</p>
+                </a>
+                <a href="/register/" class="service-card fade-up-d3">
+                    <div class="service-icon">💡</div>
+                    <h3>Utilities</h3>
+                    <p>Water, electricity &amp; drainage issues</p>
+                </a>
+                <a href="/register/" class="service-card fade-up-d1">
+                    <div class="service-icon">🤝</div>
+                    <h3>Public Behaviour</h3>
+                    <p>Noise, encroachment &amp; civic violations</p>
+                </a>
+                <a href="/login/" class="service-card fade-up-d2">
+                    <div class="service-icon">📊</div>
+                    <h3>Track Status</h3>
+                    <p>Log in to check the real-time status of your filed complaints</p>
+                </a>
+                <a href="/register/" class="service-card fade-up-d3">
+                    <div class="service-icon">📌</div>
+                    <h3>Other Issues</h3>
+                    <p>Report any civic issue not listed above</p>
+                </a>
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="how-section">
+            <div class="section-heading">⚙️ How It Works</div>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-num">1</div>
+                    <h4>Submit Complaint</h4>
+                    <p>Fill a simple form with your issue, location, and optional photo. No complex process.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">2</div>
+                    <h4>AI Analysis</h4>
+                    <p>Our system scores severity and routes it to the right government department instantly.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">3</div>
+                    <h4>Resolution &amp; Proof</h4>
+                    <p>Officials resolve the issue and upload photo proof. You receive a real-time notification.</p>
                 </div>
             </div>
         </div>
     </div>
-</section>
 
-<!-- Footer Section -->
-<footer class="relative bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
-    <!-- Background Elements -->
-    <div class="absolute inset-0 opacity-5" style="background-image: linear-gradient(90deg, #fff 1px, transparent 1px), linear-gradient(#fff 1px, transparent 1px); background-size: 50px 50px; -z-index: 0;"></div>
-    <div class="absolute top-0 left-20 w-96 h-96 bg-saffron/10 rounded-full filter blur-3xl animate-float"></div>
-    <div class="absolute bottom-0 right-20 w-96 h-96 bg-green-i/10 rounded-full filter blur-3xl animate-float" style="animation-delay: 3s;"></div>
-    
-    <div class="max-w-6xl mx-auto px-6 py-20 relative z-10">
-        
-        <!-- Main Footer Content -->
-        <div class="grid md:grid-cols-4 gap-12 mb-16">
-            
-            <!-- Branding -->
-            <div class="animate-fade-in-left" style="animation-delay: 0.1s">
-                <h3 class="text-2xl font-bold mb-4 bg-gradient-to-r from-saffron to-green-i bg-clip-text text-transparent">SCFMS</h3>
-                <p class="text-white/70 text-sm leading-relaxed mb-6">
-                    Smart City Feedback Management System - Transforming governance through transparency and technology.
-                </p>
-                <div class="flex gap-4">
-                    <a href="#" class="w-10 h-10 rounded-lg bg-white/10 hover:bg-saffron/30 flex items-center justify-center transition duration-300">
-                        <span>f</span>
-                    </a>
-                    <a href="#" class="w-10 h-10 rounded-lg bg-white/10 hover:bg-green-i/30 flex items-center justify-center transition duration-300">
-                        <span>t</span>
-                    </a>
-                    <a href="#" class="w-10 h-10 rounded-lg bg-white/10 hover:bg-blue-400/30 flex items-center justify-center transition duration-300">
-                        <span>in</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Quick Links -->
-            <div class="animate-fade-in-up" style="animation-delay: 0.2s">
-                <h4 class="text-lg font-bold mb-6 text-white">Resources</h4>
-                <ul class="space-y-3">
-                    <li><a href="#" class="text-white/70 hover:text-saffron transition duration-200 font-medium">Documentation</a></li>
-                    <li><a href="#" class="text-white/70 hover:text-saffron transition duration-200 font-medium">FAQ</a></li>
-                    <li><a href="#" class="text-white/70 hover:text-saffron transition duration-200 font-medium">Blog</a></li>
-                    <li><a href="#" class="text-white/70 hover:text-saffron transition duration-200 font-medium">Support</a></li>
+    <!-- Right Sidebar -->
+    <aside class="sidebar">
+        <!-- Announcements -->
+        <div class="sidebar-card fade-up-d1">
+            <div class="sidebar-card-header">📢 Announcements & Updates</div>
+            <div class="sidebar-card-body">
+                <ul class="announcement-list">
+                    <li>New AI-powered complaint severity scoring is now live. <span class="new-badge">NEW</span></li>
+                    <li>Photo proof of resolution is now mandatory for all government officials.</li>
+                    <li>Duplicate complaint detection feature launched to avoid redundant entries.</li>
+                    <li>Weekly PDF reports now available for department heads to download.</li>
+                    <li>Real-time WebSocket notifications enabled across all portals.</li>
+                    <li>SCFMS is now integrated with Smart City Mission dashboard. <span class="new-badge">NEW</span></li>
                 </ul>
             </div>
+        </div>
 
-            <!-- Legal -->
-            <div class="animate-fade-in-up" style="animation-delay: 0.3s">
-                <h4 class="text-lg font-bold mb-6 text-white">Legal</h4>
-                <ul class="space-y-3">
-                    <li><a href="#" class="text-white/70 hover:text-green-i transition duration-200 font-medium">Privacy Policy</a></li>
-                    <li><a href="#" class="text-white/70 hover:text-green-i transition duration-200 font-medium">Terms of Service</a></li>
-                    <li><a href="#" class="text-white/70 hover:text-green-i transition duration-200 font-medium">Cookie Policy</a></li>
-                    <li><a href="#" class="text-white/70 hover:text-green-i transition duration-200 font-medium">Compliance</a></li>
+        <!-- Quick Access Register -->
+        <div class="sidebar-card fade-up-d2">
+            <div class="sidebar-card-header">⚡ Quick Access</div>
+            <div class="sidebar-card-body">
+                <ul class="quick-links">
+                    <li><a href="/register/">Register as Citizen</a></li>
+                    <li><a href="/login/">Citizen Login</a></li>
+                    <li><a href="/login/">Citizen Login</a></li>
+                    <li><a href="/register/">Register as Citizen</a></li>
+                    <li><a href="/go-login/">Government Official Login</a></li>
+                    <li><a href="/go-login/">Government Official Login</a></li>
                 </ul>
             </div>
+        </div>
 
-            <!-- Contact -->
-            <div class="animate-fade-in-right" style="animation-delay: 0.4s">
-                <h4 class="text-lg font-bold mb-6 text-white">Contact</h4>
-                <div class="space-y-4">
-                    <div>
-                        <p class="text-white/70 text-sm mb-1">Email</p>
-                        <a href="mailto:support@scfms.gov.in" class="text-saffron hover:text-orange-400 transition duration-200 font-semibold">
-                            support@scfms.gov.in
-                        </a>
-                    </div>
-                    <div>
-                        <p class="text-white/70 text-sm mb-1">Helpline</p>
-                        <a href="tel:+911800-123-4567" class="text-green-i hover:text-emerald-400 transition duration-200 font-semibold">
-                            +91-1800-123-4567
-                        </a>
-                    </div>
+        <!-- Contact Card -->
+        <div class="sidebar-card fade-up-d3">
+            <div class="sidebar-card-header">📞 Helpdesk</div>
+            <div class="sidebar-card-body">
+                <div style="font-size:12.5px;color:#444;line-height:1.9;">
+                    <div>📧 <a href="mailto:support@scfms.gov.in" style="color:#1a5276;font-weight:600;">support@scfms.gov.in</a></div>
+                    <div>📞 <a href="tel:18001234567" style="color:#1a5276;font-weight:600;">1800-123-4567</a> (Toll Free)</div>
+                    <div style="margin-top:10px;font-size:11.5px;color:#888;">Mon – Sat: 9:00 AM – 6:00 PM</div>
+                    <div style="font-size:11.5px;color:#888;">Sunday: Closed</div>
                 </div>
             </div>
         </div>
+    </aside>
+</div>
 
-        <!-- Divider -->
-        <div class="border-t border-white/10 py-8">
-            <!-- Bottom Section -->
-            <div class="grid md:grid-cols-2 gap-8 items-center">
-                <div class="text-center md:text-left animate-fade-in-left" style="animation-delay: 0.5s">
-                    <p class="text-white/60 text-sm">
-                        © 2025 Smart City Feedback Management System (SCFMS). All rights reserved.
-                    </p>
-                </div>
-                <div class="flex justify-center md:justify-end gap-6 animate-fade-in-right" style="animation-delay: 0.5s">
-                    <div class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 hover:border-saffron/50 transition duration-300">
-                        <span class="text-sm font-semibold">🇮🇳 Digital India</span>
-                    </div>
-                    <div class="px-4 py-2 rounded-lg bg-white/10 border border-white/20 hover:border-green-i/50 transition duration-300">
-                        <span class="text-sm font-semibold">🏙️ Smart Cities</span>
-                    </div>
-                </div>
-            </div>
+<!-- ── Mission Section ────────────────────────────── -->
+<section class="mission-section">
+    <div class="mission-inner fade-up">
+        <div class="mission-motto">"सेवा परमॊ धर्मः"</div>
+        <div class="mission-en">Service is the highest form of duty</div>
+        <p class="mission-desc">
+            The Smart City Feedback Management System (SCFMS) is a Digital India initiative designed to make 
+            governance transparent, accountable, and citizen-centric. We bridge the gap between citizens 
+            and government with AI-powered tools, real-time tracking, and verified proof of resolution.
+        </p>
+        <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+            <a href="/register/" class="btn-secondary">Get Started — Register Free</a>
+            <a href="/login/" class="btn-outline" style="border-color:rgba(255,255,255,0.4);color:#fff;">Citizen Login</a>
         </div>
+    </div>
+</section>
 
-        <!-- Bottom Tricolor Bar -->
-        <div class="mt-12 h-1 flex w-full shadow-lg">
-            <div class="flex-1 bg-saffron"></div>
-            <div class="flex-1 bg-white"></div>
-            <div class="flex-1 bg-green-i"></div>
+<!-- ── Footer ─────────────────────────────────────── -->
+<footer class="gov-footer">
+    <div class="footer-inner">
+        <div class="footer-brand">
+            <h3>🏛️ SCFMS</h3>
+            <p>Smart City Feedback Management System — A Digital India initiative under the Ministry of Housing &amp; Urban Affairs, transforming governance through transparency, technology, and accountability.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Services</h4>
+            <ul>
+                <li><a href="/register/">Register</a></li>
+                <li><a href="/login/">Track Status</a></li>
+                <li><a href="/register/">Register</a></li>
+                <li><a href="/login/">Login</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>Government</h4>
+            <ul>
+                <li><a href="/go-login/">Official Login</a></li>
+                <li><a href="/go-login/">Official Login</a></li>
+                <li><a href="/go-dashboard/">Dashboard</a></li>
+                <li><a href="#">Reports</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>Legal</h4>
+            <ul>
+                <li><a href="#">Privacy Policy</a></li>
+                <li><a href="#">Terms of Service</a></li>
+                <li><a href="#">Accessibility</a></li>
+                <li><a href="#">RTI</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <span>© 2025 Smart City Feedback Management System (SCFMS). All rights reserved. &nbsp;|&nbsp; Government of India</span>
+        <div class="footer-badges">
+            <span class="footer-badge">🇮🇳 Digital India</span>
+            <span class="footer-badge">🏙️ Smart Cities Mission</span>
+            <span class="footer-badge">⚖️ Open Government</span>
         </div>
     </div>
 </footer>
-{% endblock %}
 
-{% block extra_js %}
-<style>
-/* ===== Smooth Animations ===== */
+<!-- Bottom Tricolor -->
+<div class="tricolor-bar">
+    <div class="saffron"></div>
+    <div class="white"></div>
+    <div class="green"></div>
+</div>
 
-/* Fade In Animations */
-@keyframes fadeInUp {
-    0% { 
-        opacity: 0; 
-        transform: translateY(30px); 
-    }
-    100% { 
-        opacity: 1; 
-        transform: translateY(0); 
-    }
+<script>
+// Animate stats counter
+function animateCounter(el, target, suffix = '') {
+    const isPercent = suffix === '%';
+    let start = 0;
+    const duration = 1800;
+    const step = (timestamp) => {
+        if (!start) start = timestamp;
+        const progress = Math.min((timestamp - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        const val = Math.floor(ease * target);
+        el.textContent = val.toLocaleString('en-IN') + suffix;
+        if (progress < 1) requestAnimationFrame(step);
+        else el.textContent = target.toLocaleString('en-IN') + suffix;
+    };
+    requestAnimationFrame(step);
 }
 
-@keyframes fadeInDown {
-    0% { 
-        opacity: 0; 
-        transform: translateY(-30px); 
-    }
-    100% { 
-        opacity: 1; 
-        transform: translateY(0); 
-    }
-}
+// Intersection Observer for stat counters
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            animateCounter(document.getElementById('stat-complaints'), 12300, '+');
+            animateCounter(document.getElementById('stat-resolved'), 72, '%');
+            observer.disconnect();
+        }
+    });
+}, { threshold: 0.5 });
 
-@keyframes fadeInLeft {
-    0% { 
-        opacity: 0; 
-        transform: translateX(-30px); 
-    }
-    100% { 
-        opacity: 1; 
-        transform: translateX(0); 
-    }
-}
+const statsBar = document.querySelector('.stats-bar');
+if (statsBar) observer.observe(statsBar);
 
-@keyframes fadeInRight {
-    0% { 
-        opacity: 0; 
-        transform: translateX(30px); 
-    }
-    100% { 
-        opacity: 1; 
-        transform: translateX(0); 
-    }
-}
+// Scroll-triggered fade-up for service cards
+const fadeObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+        }
+    });
+}, { threshold: 0.1 });
 
-/* Floating Animation */
-@keyframes float {
-    0%, 100% { 
-        transform: translateY(0px); 
-    }
-    50% { 
-        transform: translateY(-20px); 
-    }
-}
-
-/* Pulse Animation */
-@keyframes pulse-smooth {
-    0%, 100% { 
-        opacity: 0.3; 
-    }
-    50% { 
-        opacity: 0.6; 
-    }
-}
-
-/* Glow Animation */
-@keyframes glow {
-    0%, 100% { 
-        box-shadow: 0 0 5px rgba(255, 153, 51, 0.3); 
-    }
-    50% { 
-        box-shadow: 0 0 20px rgba(255, 153, 51, 0.5); 
-    }
-}
-
-/* Animation Classes */
-.animate-fade-in-up {
-    animation: fadeInUp 0.8s ease-out forwards;
-    opacity: 0;
-}
-
-.animate-fade-in-down {
-    animation: fadeInDown 0.8s ease-out forwards;
-    opacity: 0;
-}
-
-.animate-fade-in-left {
-    animation: fadeInLeft 0.8s ease-out forwards;
-    opacity: 0;
-}
-
-.animate-fade-in-right {
-    animation: fadeInRight 0.8s ease-out forwards;
-    opacity: 0;
-}
-
-.animate-float {
-    animation: float 6s ease-in-out infinite;
-}
-
-.animate-pulse {
-    animation: pulse-smooth 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-.animate-glow {
-    animation: glow 2s ease-in-out infinite;
-}
-
-/* Delay Classes */
-.delay-100 { animation-delay: 0.1s; }
-.delay-150 { animation-delay: 0.15s; }
-.delay-200 { animation-delay: 0.2s; }
-.delay-300 { animation-delay: 0.3s; }
-.delay-500 { animation-delay: 0.5s; }
-.delay-1000 { animation-delay: 1s; }
-
-/* Smooth Transition Defaults */
-* {
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Glassmorphism Effect */
-.backdrop-blur-xl {
-    backdrop-filter: blur(32px);
-}
-
-.backdrop-blur-md {
-    backdrop-filter: blur(12px);
-}
-
-/* Gradient Text */
-.bg-clip-text {
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-/* Enhanced Shadow */
-.shadow-2xl {
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-}
-
-/* Grid Pattern Background */
-.grid-pattern {
-    background-image: 
-        linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px),
-        linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px);
-    background-size: 50px 50px;
-}
-
-/* Smooth Scale Transform */
-.group:hover .group-hover\:scale-110 {
-    transform: scale(1.1);
-}
-
-/* Better Text Rendering */
-body {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-/* Responsive Animation Speed */
-@media (max-width: 768px) {
-    .animate-fade-in-up,
-    .animate-fade-in-down,
-    .animate-fade-in-left,
-    .animate-fade-in-right {
-        animation-duration: 0.6s;
-    }
-}
-</style>
+document.querySelectorAll('.service-card, .step-card, .sidebar-card, .portal-card').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    fadeObserver.observe(el);
+});
+</script>
 {% endblock %}
