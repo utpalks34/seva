@@ -5,7 +5,7 @@ services:
     plan: free
     rootDir: scfms_project
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt && python manage.py collectstatic --noinput
-    preDeployCommand: python manage.py migrate
+    
     startCommand: daphne -b 0.0.0.0 -p $PORT scfms_backend.asgi:application
     envVars:
       - key: PYTHON_VERSION
