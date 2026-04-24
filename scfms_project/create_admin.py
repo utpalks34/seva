@@ -32,6 +32,7 @@ else:
     user.role = 'AD'
     if not user.govt_id:
         user.govt_id = 'GOVT-001'
+    user.set_password('Admin@12345')
     user.is_active = True
     user.is_verified = True
     user.is_staff = True
@@ -39,5 +40,6 @@ else:
     user.save()
     print("Existing admin user updated.")
     print("Email: admin@govt.com")
+    print("Password: Admin@12345")
     print("Role: Administrator (AD)")
     print("Government ID:", user.govt_id)

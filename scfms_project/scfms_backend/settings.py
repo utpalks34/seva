@@ -167,6 +167,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 AUTH_USER_MODEL = 'complaints.User'
+PASSWORD_RESET_TIMEOUT = int(os.getenv('PASSWORD_RESET_TIMEOUT', str(60 * 60 * 24)))
 
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
@@ -175,9 +176,40 @@ PASSWORD_HASHERS = [
 
 EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
 EMAIL_FILE_PATH.mkdir(parents=True, exist_ok=True)
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.filebased.EmailBackend')
+
+EMAIL_BACKEND = os.getenv(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.smtp.EmailBackend' if os.getenv('EMAIL_HOST') else 'django.core.mail.backends.filebased.EmailBackend'
+)
+EMAIL_HOST = os.getenv('EMAIL_HOST', '')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() == 'true'
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'no-reply@scfms.local')
-SITE_URL = os.getenv('SITE_URL', 'http://127.0.0.1:8000')
+SERVER_EMAIL = os.getenv('SERVER_EMAIL', DEFAULT_FROM_EMAIL)
+SITE_URL = os.getenv('SITE_URL', 'http://127.0.0.1:8000').rstrip('/')
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+GOV_SECRET_KEY = os.getenv('GOV_SECRET_KEY', '')
+GOV_ALLOWED_EMAIL_DOMAINS = [
+    item.strip().lower()
+    for item in os.getenv('GOV_ALLOWED_EMAIL_DOMAINS', 'gov.in,gov.local').split(',')
+    if item.strip()
+]
+GOV_ALLOWED_EMAILS = [
+    item.strip().lower()
+    for item in os.getenv('GOV_ALLOWED_EMAILS', '').split(',')
+    if item.strip()
+]
+GOV_AUTO_APPROVE = os.getenv('GOV_AUTO_APPROVE', 'False').lower() == 'true'
+DEMO_GOV_EMAIL = os.getenv('DEMO_GOV_EMAIL', 'admin@gov.local').strip().lower()
+DEMO_GOV_PASSWORD = os.getenv('DEMO_GOV_PASSWORD', 'Admin@123')
+DEMO_GOV_GOVT_ID = os.getenv('DEMO_GOV_GOVT_ID', 'GOV-DEMO-001').strip()
+DEMO_ADMIN_EMAIL = os.getenv('DEMO_ADMIN_EMAIL', 'admin@govt.com').strip().lower()
+DEMO_ADMIN_PASSWORD = os.getenv('DEMO_ADMIN_PASSWORD', 'Admin@12345')
+DEMO_ADMIN_GOVT_ID = os.getenv('DEMO_ADMIN_GOVT_ID', 'GOVT-001').strip()
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

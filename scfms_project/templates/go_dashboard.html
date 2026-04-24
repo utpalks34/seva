@@ -1091,6 +1091,7 @@
 
             // Add markers for all complaints
             let markersGroup = L.featureGroup();
+            let heatData = [];
             let validCoords = 0;
 
             complaints.forEach(complaint => {
@@ -1099,6 +1100,12 @@
 
                 if (lat && lon && complaint.status !== 'R') { // Only map pending/in-progress issues
                     validCoords++;
+                    
+                    // Heatmap data point [lat, lon, intensity]
+                    // We use severity score (0-100) as intensity factor
+                    const intensity = (complaint.severity_score || 50) / 100;
+                    heatData.push([lat, lon, intensity]);
+
                     const markerColor = complaint.status === 'P' ? 'red' : 'blue';
                     const marker = L.circleMarker([lat, lon], {
                         radius: 8,
@@ -1118,6 +1125,17 @@
             });
 
             if (validCoords > 0) {
+                // Add the heatmap layer (using leaflet-heat)
+                if (typeof L.heatLayer !== 'undefined') {
+                    L.heatLayer(heatData, {
+                        radius: 25,
+                        blur: 15,
+                        maxZoom: 10,
+                        gradient: {0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1.0: 'red'}
+                    }).addTo(complaintMap);
+                }
+
+                // Add the interactive markers on top
                 markersGroup.addTo(complaintMap);
                 // Optionally zoom to fit all markers
                 // complaintMap.fitBounds(markersGroup.getBounds());
@@ -1437,55 +1455,26 @@
         //              🚨 WEBSOCKET REAL-TIME UPDATES
         // ============================================================
 
-        function initWebSocket() {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const token = GO_AUTH_TOKEN || localStorage.getItem('go_auth_token') || localStorage.getItem('auth_token');
-            const wsUrl = `${protocol}//${window.location.host}/ws/notifications/?token=${token}`;
-
-            const ws = new WebSocket(wsUrl);
-
-            ws.onopen = () => {
-                console.log('✅ WebSocket connected!');
-                document.getElementById('wsStatus').innerText = '🟢 Live';
-                document.getElementById('wsStatus').style.color = '#059669'; // green
-            };
-
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-
-                // Handle different message types
-                if (data.type === 'new_complaint') {
-                    console.log('📢 NEW COMPLAINT RECEIVED:', data);
-                    handleNewComplaintBroadcast(data);
+        // --- Token refresh helper ---
+        async function refreshAuthToken() {
+            const refresh = localStorage.getItem('refresh_token') || localStorage.getItem('go_refresh_token');
+            if (!refresh) return null;
+            try {
+                const res = await fetch('/api/auth/refresh/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refresh })
+                });
+                if (!res.ok) return null;
+                const data = await res.json();
+                const newToken = data.token || data.access;
+                if (newToken) {
+                    localStorage.setItem('go_auth_token', newToken);
+                    if (data.refresh) localStorage.setItem('refresh_token', data.refresh);
+                    return newToken;
                 }
-                else if (data.type === 'complaint_update') {
-                    console.log('🔄 COMPLAINT UPDATE:', data);
-                    handleComplaintUpdate(data);
-                }
-                else if (data.type === 'dashboard_update') {
-                    console.log('📊 DASHBOARD METRICS UPDATE:', data);
-                    updateDashboardMetrics(data);
-                }
-                else if (data.type === 'notification') {
-                    console.log('🔔 NOTIFICATION:', data.message);
-                    showNotificationToast(data.message);
-                }
-            };
-
-            ws.onerror = (error) => {
-                console.error('❌ WebSocket error:', error);
-                document.getElementById('wsStatus').innerText = '🔴 Disconnected';
-                document.getElementById('wsStatus').style.color = '#dc2626'; // red
-            };
-
-            ws.onclose = () => {
-                console.log('❌ WebSocket closed, reconnecting in 3 seconds...');
-                document.getElementById('wsStatus').innerText = '🟡 Reconnecting...';
-                document.getElementById('wsStatus').style.color = '#d97706'; // orange
-
-                // Auto-reconnect after 3 seconds
-                setTimeout(initWebSocket, 3000);
-            };
+            } catch (e) { /* network error */ }
+            return null;
         }
 
         function handleNewComplaintBroadcast(data) {
@@ -1744,19 +1733,129 @@
             document.getElementById('complaintDetailModal').style.display = 'none';
         }
 
+        let goDashboardSocket = null;
+        let wsReconnectAttempts = 0;
+        let wsReconnectTimer = null;
+        let dashboardPollingTimer = null;
+
+        function updateWsStatus(text, color) {
+            const wsEl = document.getElementById('wsStatus');
+            if (!wsEl) return;
+            wsEl.textContent = text;
+            wsEl.style.color = color;
+        }
+
+        function startDashboardPolling() {
+            if (dashboardPollingTimer) return;
+            dashboardPollingTimer = setInterval(() => {
+                fetchAnalytics();
+                fetchAndRenderComplaints();
+            }, 15000);
+        }
+
+        function stopDashboardPolling() {
+            if (!dashboardPollingTimer) return;
+            clearInterval(dashboardPollingTimer);
+            dashboardPollingTimer = null;
+        }
+
+        function scheduleWsReconnect() {
+            if (wsReconnectTimer) return;
+            const delay = Math.min(3000 * Math.max(wsReconnectAttempts, 1), 30000);
+            updateWsStatus('Polling live updates...', '#d97706');
+            startDashboardPolling();
+            wsReconnectTimer = setTimeout(() => {
+                wsReconnectTimer = null;
+                initWebSocket();
+            }, delay);
+        }
+
+        initWebSocket = function () {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const token = localStorage.getItem('go_auth_token') || localStorage.getItem('auth_token') || GO_AUTH_TOKEN;
+
+            if (!token) {
+                updateWsStatus('⚫ Offline', '#94a3b8');
+                startDashboardPolling();
+                return;
+            }
+
+            if (goDashboardSocket && (goDashboardSocket.readyState === WebSocket.OPEN || goDashboardSocket.readyState === WebSocket.CONNECTING)) {
+                return;
+            }
+
+            updateWsStatus('🟡 Connecting...', '#d97706');
+            const wsUrl = `${protocol}//${window.location.host}/ws/notifications/?token=${encodeURIComponent(token)}`;
+            goDashboardSocket = new WebSocket(wsUrl);
+
+            goDashboardSocket.onopen = () => {
+                console.log('✅ WebSocket connected');
+                wsReconnectAttempts = 0;
+                stopDashboardPolling();
+                updateWsStatus('🟢 Live', '#059669');
+            };
+
+            goDashboardSocket.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'new_complaint') {
+                        handleNewComplaintBroadcast(data);
+                    } else if (data.type === 'complaint_update') {
+                        handleComplaintUpdate(data);
+                    } else if (data.type === 'dashboard_update') {
+                        updateDashboardMetrics(data);
+                    } else if (data.type === 'notification') {
+                        showNotificationToast(data.message);
+                    }
+                } catch(e) { console.error('WS message parse error:', e); }
+            };
+
+            goDashboardSocket.onerror = (error) => {
+                console.error('❌ WebSocket error:', error);
+                // Don't update status here — onclose will fire next and handle it
+            };
+
+            goDashboardSocket.onclose = (event) => {
+                goDashboardSocket = null;
+                console.log('WebSocket closed, code:', event.code);
+
+                if (event.code === 4003) {
+                    // JWT expired or invalid — try to refresh the token then reconnect
+                    updateWsStatus('🔄 Refreshing token...', '#d97706');
+                    refreshAuthToken().then(newToken => {
+                        if (newToken) {
+                            console.log('🔑 Token refreshed — reconnecting WebSocket');
+                            wsReconnectAttempts = 0;
+                            initWebSocket();
+                        } else {
+                            // Refresh failed: no refresh token or server rejected it
+                            // Fall back to polling so the dashboard still works
+                            console.warn('⚠️  Token refresh failed — falling back to polling');
+                            updateWsStatus('⚫ Offline (polling)', '#94a3b8');
+                            startDashboardPolling();
+                        }
+                    });
+                    return;
+                }
+
+                wsReconnectAttempts += 1;
+                scheduleWsReconnect();
+            };
+        };
+
 
         document.addEventListener('DOMContentLoaded', () => {
             // Hide analytics section
             const analyticsSection = document.getElementById('analyticsSection');
             if (analyticsSection) analyticsSection.style.display = 'none';
 
-            // Gracefully attempt WebSocket – never let WS errors crash the page
+            // Gracefully attempt WebSocket - never let WS errors crash the page
             try {
                 initWebSocket();
             } catch (e) {
                 console.warn('WebSocket init skipped:', e);
                 const wsEl = document.getElementById('wsStatus');
-                if (wsEl) { wsEl.textContent = '⚫ Offline'; wsEl.style.color = '#94a3b8'; }
+                if (wsEl) { wsEl.textContent = 'Offline'; wsEl.style.color = '#94a3b8'; }
             }
 
             // Load complaint table + basic KPI cards
@@ -1783,6 +1882,7 @@
                 logoutBtn.addEventListener('click', () => {
                     localStorage.removeItem('go_auth_token');
                     localStorage.removeItem('auth_token');
+                    localStorage.removeItem('refresh_token');
                     window.location.href = '/';
                 });
             }

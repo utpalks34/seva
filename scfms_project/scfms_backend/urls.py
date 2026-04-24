@@ -97,7 +97,7 @@ urlpatterns = [
     # --- PUBLIC API ROUTES ---
     path('api/auth/register/', PCRedistrationView.as_view(), name='pc-register-api'),
     path('api/auth/login/', PCLoginView.as_view(), name='pc-login-api'),
-    path('api/auth/verify-email/', VerifyCitizenEmailView.as_view(), name='pc-verify-email-api'),
+    path('verify-email/<uidb64>/<token>/', VerifyCitizenEmailView.as_view(), name='pc-verify-email'),
     path('api/auth/refresh/', RefreshTokenView.as_view(), name='auth-refresh-api'),
     path('api/auth/otp/verify/', VerifyOTPView.as_view(), name='auth-otp-verify-api'),
     path('api/notifications/', NotificationListView.as_view(), name='pc-notifications'),

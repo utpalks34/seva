@@ -11,7 +11,7 @@ from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
 from django.utils import timezone
 
 
-ACCESS_TOKEN_LIFETIME = timedelta(minutes=15)
+ACCESS_TOKEN_LIFETIME = timedelta(hours=8)
 REFRESH_TOKEN_LIFETIME = timedelta(days=7)
 EMAIL_TOKEN_MAX_AGE = 60 * 60 * 24
 ACTIVATION_TOKEN_MAX_AGE = 60 * 60 * 24 * 2

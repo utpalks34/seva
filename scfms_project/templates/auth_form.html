@@ -17,7 +17,7 @@
       <h2 class="text-3xl font-bold mb-6 text-center text-green-i">Citizen Registration</h2>
 
     {% elif form_type == "go_login" %}
-      <h2 class="text-3xl font-bold mb-6 text-center text-blue-700">Government Login</h2>
+      <h2 class="text-3xl font-bold mb-6 text-center text-blue-700">Government Portal Login</h2>
 
     {% endif %}
 
@@ -42,7 +42,7 @@
       <!-- Government ID & Email -->
       {% if form_type == "go_login" %}
       <div>
-        <label class="block mb-1 font-semibold text-gray-600">Email</label>
+        <label class="block mb-1 font-semibold text-gray-600">Official Email</label>
         <input type="email" id="email" class="w-full border rounded-lg p-3" placeholder="your.email@gov.in" required>
       </div>
 
@@ -56,7 +56,7 @@
       {% if form_type == "pc_login" or form_type == "pc_register" %}
       <div>
         <label class="block mb-1 font-semibold text-gray-600">Email</label>
-        <input type="email" id="email" class="w-full border rounded-lg p-3" required>
+        <input type="email" id="email" class="w-full border rounded-lg p-3" placeholder="Enter your registered email" required>
       </div>
       {% endif %}
 
@@ -65,6 +65,14 @@
         <label class="block mb-1 font-semibold text-gray-600">Password</label>
         <input type="password" id="password" class="w-full border rounded-lg p-3" required>
       </div>
+
+      {% if form_type == "pc_login" %}
+      <p class="text-sm text-gray-500">Use the email address you registered with to log in to the citizen portal.</p>
+      {% elif form_type == "go_login" %}
+      <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+        Public registration is disabled for the government portal. Contact admin for your Government ID and password setup.
+      </div>
+      {% endif %}
 
       <button type="submit"
         class="w-full {% if 'login' in form_type %}bg-blue-600{% else %}bg-green-i{% endif %}
@@ -82,7 +90,7 @@
         Already registered? <a href="/login/" class="text-blue-600 hover:underline">Login here</a>
 
       {% elif form_type == "go_login" %}
-        Need access? <span class="text-gray-700">Contact your administrator to create your government account.</span>
+        Need access? <span class="text-gray-700">Contact admin for your Government ID and password setup. Government self-registration is disabled.</span>
       {% endif %}
     </p>
   </div>
@@ -104,7 +112,7 @@ document.getElementById("authForm").addEventListener("submit", async function(e)
     if (formType === "pc_login") {
         url = "/api/auth/login/";
         payload = {
-            email: document.getElementById("email").value,
+            email: document.getElementById("email").value.trim().toLowerCase(),
             password: document.getElementById("password").value
         };
     }
@@ -120,7 +128,7 @@ document.getElementById("authForm").addEventListener("submit", async function(e)
 
         url = "/api/auth/register/";
         payload = {
-            email: document.getElementById("email").value,
+            email: document.getElementById("email").value.trim().toLowerCase(),
             password: document.getElementById("password").value,
             first_name: firstName,
             last_name: lastName
@@ -133,9 +141,9 @@ document.getElementById("authForm").addEventListener("submit", async function(e)
     if (formType === "go_login") {
         url = "/api/govt/login/";
         payload = {
-            email: document.getElementById("email").value,
+            email: document.getElementById("email").value.trim().toLowerCase(),
             password: document.getElementById("password").value,
-            govt_id: document.getElementById("govt_id").value
+            govt_id: document.getElementById("govt_id").value.trim()
         };
     }
 
@@ -149,28 +157,34 @@ document.getElementById("authForm").addEventListener("submit", async function(e)
         const data = await res.json();
         
         // Debug logging
-        console.log("📤 Request to:", url);
-        console.log("📋 Payload:", payload);
-        console.log("📥 Response Status:", res.status);
-        console.log("📥 Response Data:", data);
+        console.log("Request to:", url);
+        console.log("Payload:", payload);
+        console.log("Response Status:", res.status);
+        console.log("Response Data:", data);
 
         if (res.ok) {
             // Clear ALL old tokens first to prevent cross-contamination
             localStorage.removeItem("auth_token");
             localStorage.removeItem("go_auth_token");
+            localStorage.removeItem("refresh_token");
 
             if (formType === "go_login") {
                 // Government login: store token ONLY as go_auth_token
-                if (data.token) {
-                    localStorage.setItem("go_auth_token", data.token);
+                const accessToken = data.token || data.go_token || data.access;
+                if (accessToken) {
+                    localStorage.setItem("go_auth_token", accessToken);
                 }
-                if (data.go_token) {
-                    localStorage.setItem("go_auth_token", data.go_token);
+                // Store refresh token so WS auto-renew works when JWT expires
+                if (data.refresh) {
+                    localStorage.setItem("refresh_token", data.refresh);
                 }
             } else {
                 // Citizen login: store token ONLY as auth_token
-                if (data.token) {
-                    localStorage.setItem("auth_token", data.token);
+                if (data.token || data.access) {
+                    localStorage.setItem("auth_token", data.token || data.access);
+                }
+                if (data.refresh) {
+                    localStorage.setItem("refresh_token", data.refresh);
                 }
             }
 

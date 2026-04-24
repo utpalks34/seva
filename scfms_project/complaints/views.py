@@ -2,9 +2,12 @@ from django.shortcuts import render, redirect
 from django.conf import settings 
 from django.db.models import Count, Avg, F
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
 import os
 import google.generativeai as genai
@@ -43,12 +46,10 @@ from .auth_utils import (
     SignatureExpired,
     clear_user_otp,
     create_activation_token,
-    create_email_verification_token,
     create_jwt_pair,
     create_otp_code,
     decode_jwt_token,
     read_activation_token,
-    read_email_verification_token,
     store_otp_on_user,
     verify_user_otp,
 )
@@ -58,18 +59,22 @@ User = get_user_model()
 
 
 def _build_absolute_url(path: str) -> str:
-    return f"{settings.SITE_URL.rstrip('/')}{path}"
+    base_url = settings.SITE_URL.rstrip('/')
+    if not settings.DEBUG and base_url.startswith('http://'):
+        base_url = f"https://{base_url[len('http://'):]}"
+    return f"{base_url}{path}"
 
 
 def _send_verification_email(user):
-    token = create_email_verification_token(user)
-    verify_url = _build_absolute_url(f"/api/auth/verify-email/?token={token}")
+    uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+    verify_url = _build_absolute_url(f"/verify-email/{uidb64}/{token}/")
     send_mail(
         subject="Verify your SCFMS account",
         message=(
             "Welcome to SCFMS.\n\n"
             f"Verify your email here:\n{verify_url}\n\n"
-            "This verification link expires in 24 hours."
+            "This link can be used only once. Please verify your email before logging in."
         ),
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[user.email],
@@ -137,7 +142,7 @@ def go_login_view(request):
     """Government Official Login Form"""
     return render(request, 'auth_form.html', {
         'form_type': 'go_login',
-        'govt_notice': 'Government accounts are created by an administrator. Use your official email and the password you set from the activation link.',
+        'govt_notice': 'Government accounts are created by admin only. Use your official email, government ID, and the password set for your account. Contact admin if you need an ID or password setup.',
     })
 
 def go_register_view_html(request):
@@ -209,7 +214,7 @@ class PCLoginView(APIView):
             if not user.check_password(password):
                 return Response({'error': 'Invalid Credentials.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            if not user.is_verified:
+            if not user.is_active:
                 return Response(
                     {'error': 'Please verify your email before logging in.'},
                     status=status.HTTP_403_FORBIDDEN
@@ -224,19 +229,29 @@ class PCLoginView(APIView):
 class VerifyCitizenEmailView(APIView):
     permission_classes = (AllowAny,)
 
-    def get(self, request):
-        token = request.query_params.get("token")
-        if not token:
-            return Response({"error": "Verification token is required."}, status=status.HTTP_400_BAD_REQUEST)
+    def get(self, request, uidb64=None, token=None):
+        if not uidb64 or not token:
+            return Response(
+                {"error": "Verification link is invalid."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
-            user_id, email = read_email_verification_token(token)
-            user = User.objects.get(pk=user_id, email=email, role='PC')
-            user.is_verified = True
-            user.save(update_fields=["is_verified"])
-            return Response({"message": "Email verified successfully."}, status=status.HTTP_200_OK)
-        except (BadSignature, SignatureExpired, User.DoesNotExist):
+            user_id = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=user_id, role='PC')
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             return Response({"error": "Invalid or expired verification link."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if user.is_active:
+            return Response({"message": "Email is already verified. Please log in."}, status=status.HTTP_200_OK)
+
+        if default_token_generator.check_token(user, token):
+            user.is_active = True
+            user.is_verified = True
+            user.save(update_fields=["is_active", "is_verified"])
+            return Response({"message": "Email verified successfully."}, status=status.HTTP_200_OK)
+
+        return Response({"error": "Invalid or expired verification link."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -289,7 +304,7 @@ class ComplaintViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print(f"⚠️  Department routing failed: {e}")
 
-        # === 🚨 BROADCAST TO ALL GOS VIA WEBSOCKET ===
+        # ===  BROADCAST TO ALL GOS VIA WEBSOCKET ===
         try:
             broadcast_complaint_to_gos(complaint)
         except Exception as e:
@@ -326,7 +341,7 @@ class LegacyGOLoginView(APIView):
         govt_id = request.data.get("govt_id")
         otp = request.data.get("otp")
         
-        print(f"🔐 GO Login attempt: email={email}, govt_id={govt_id}")
+        print(f" GO Login attempt: email={email}, govt_id={govt_id}")
         
         try:
             # Try to get user by email first (primary method)
@@ -483,7 +498,7 @@ class AdminUserDetailView(generics.RetrieveUpdateAPIView):
 
 
 class GORegistrationView(generics.CreateAPIView):
-    """Public GO registration is intentionally disabled."""
+    """Controlled government onboarding for production/demo use."""
     queryset = User.objects.all()
     serializer_class = GORegistrationSerializer
     permission_classes = (AllowAny,)
@@ -491,9 +506,24 @@ class GORegistrationView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        department = getattr(user, "_registered_department", "")
+        if user.is_active:
+            message = "Government account created and approved successfully."
+        else:
+            message = "Government account created. Approval is pending."
+
         return Response(
-            {'error': 'Government self-registration is disabled. Contact an administrator.'},
-            status=status.HTTP_403_FORBIDDEN
+            {
+                'message': message,
+                'email': user.email,
+                'govt_id': user.govt_id,
+                'department': department,
+                'approved': user.is_active,
+                'role': user.role,
+            },
+            status=status.HTTP_201_CREATED
         )
 
 
@@ -522,7 +552,7 @@ class GOLoginView(APIView):
             return Response({'error': 'This account is not a Government or Admin account.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not user.is_active:
-            return Response({'error': 'Account has not been activated yet.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'Government account is pending approval.'}, status=status.HTTP_403_FORBIDDEN)
 
         if not user.check_password(password):
             return Response({'error': 'Invalid email/password combination.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -567,7 +597,7 @@ class GOComplaintViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixin
         return ComplaintRegistrationSerializer
 
     def list(self, request, *args, **kwargs):
-        print(f"🔐 GOComplaintViewSet.list() called")
+        print(f"GOComplaintViewSet.list() called")
         print(f"   User: {request.user}")
         print(f"   User Role: {request.user.role if hasattr(request.user, 'role') else 'N/A'}")
         print(f"   Authenticated: {request.user.is_authenticated}")
@@ -624,7 +654,7 @@ class GOComplaintViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixin
 
             create_notification(user=citizen, message=message, complaint=instance)
             
-            # === 🔄 BROADCAST STATUS UPDATE TO ALL GOs ===
+            # ===  BROADCAST STATUS UPDATE TO ALL GOs ===
             try:
                 broadcast_complaint_update(instance)
                 broadcast_dashboard_metrics()
@@ -677,11 +707,11 @@ class AIAnalyzeView(APIView):
                 for chunk in image.chunks():
                     f.write(chunk)
 
-            print(f"📸 Image saved to: {temp_path}")
+            print(f" Image saved to: {temp_path}")
 
             # === AI Classification ===
             department_code = classify_image_category(temp_path)
-            print(f"🏷️ Department code: {department_code}")
+            print(f"️ Department code: {department_code}")
             
             severity_score = calculate_severity_score(department_code)
             print(f"⚠️ Severity score: {severity_score}")
@@ -1121,7 +1151,7 @@ class TimelineView(APIView):
         # ── Event 1: Complaint Created ───────────────────────────
         timeline.append({
             'action':      'CREATED',
-            'icon':        '📝',
+            'icon':        '',
             'title':       'Complaint Submitted',
             'description': f'"{complaint.title}" was submitted by {complaint.user.email}.',
             'actor':       complaint.user.email,
@@ -1138,7 +1168,7 @@ class TimelineView(APIView):
             # Assigned
             timeline.append({
                 'action':      'ASSIGNED',
-                'icon':        '🏢',
+                'icon':        '',
                 'title':       f'Assigned to {dept}',
                 'description': assignment.notes or f'Complaint forwarded to {dept} for resolution.',
                 'actor':       assignment.assigned_by.email if assignment.assigned_by else 'System',
@@ -1150,7 +1180,7 @@ class TimelineView(APIView):
             if assignment.acknowledged_at:
                 timeline.append({
                     'action':      'ACKNOWLEDGED',
-                    'icon':        '👀',
+                    'icon':        '',
                     'title':       f'{dept} Acknowledged',
                     'description': f'{dept} has received and acknowledged the complaint.',
                     'actor':       assignment.department.department_head_name,

@@ -4,9 +4,10 @@ services:
     runtime: python
     plan: free
     rootDir: scfms_project
-    buildCommand: pip install --upgrade pip && pip install -r requirements.txt && python manage.py migrate && python manage.py collectstatic --noinput
-
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt && python manage.py collectstatic --noinput
+    preDeployCommand: python manage.py migrate && python manage.py ensure_demo_admin && python manage.py ensure_demo_government_user
     startCommand: daphne -b 0.0.0.0 -p $PORT scfms_backend.asgi:application
+    healthCheckPath: /go-login/
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.11
@@ -22,6 +23,18 @@ services:
         sync: false
       - key: DEFAULT_FROM_EMAIL
         value: no-reply@scfms.onrender.com
+      - key: DEMO_ADMIN_EMAIL
+        value: admin@govt.com
+      - key: DEMO_ADMIN_PASSWORD
+        sync: false
+      - key: DEMO_ADMIN_GOVT_ID
+        value: GOVT-001
+      - key: DEMO_GOV_EMAIL
+        value: admin@gov.local
+      - key: DEMO_GOV_PASSWORD
+        sync: false
+      - key: DEMO_GOV_GOVT_ID
+        value: GOV-DEMO-001
       - key: EMAIL_BACKEND
         value: django.core.mail.backends.filebased.EmailBackend
       - key: DATABASE_URL
