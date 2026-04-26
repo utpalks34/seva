@@ -206,24 +206,35 @@ class PCLoginView(APIView):
             if not email or not password:
                 return Response({'error': 'Email and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
+            # Try to find user by email and role
+            user = None
             try:
                 user = User.objects.get(email=email, role='PC')
             except User.DoesNotExist:
-                return Response({'error': 'Invalid Credentials.'}, status=status.HTTP_400_BAD_REQUEST)
+                # Also try case-insensitive search as fallback
+                try:
+                    user = User.objects.get(email__iexact=email, role='PC')
+                except User.DoesNotExist:
+                    print(f"[LOGIN] User not found: {email}")
+                    return Response({'error': 'Invalid Credentials.'}, status=status.HTTP_400_BAD_REQUEST)
 
             if not user.check_password(password):
+                print(f"[LOGIN] Password mismatch for: {email}")
                 return Response({'error': 'Invalid Credentials.'}, status=status.HTTP_400_BAD_REQUEST)
 
             # Email verification check removed - citizens can login immediately after registration
             if not user.is_active:
+                print(f"[LOGIN] Account inactive: {email}")
                 return Response(
                     {'error': 'Your account has been deactivated.'},
                     status=status.HTTP_403_FORBIDDEN
                 )
 
+            print(f"[LOGIN] Success: {email}")
             return Response(_issue_login_response(user), status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            print(f"[LOGIN] Exception: {str(e)}")
+            return Response({'error': f'Login error: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @method_decorator(csrf_exempt, name='dispatch')

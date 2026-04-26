@@ -34,14 +34,22 @@ class PublicCitizenRegistrationSerializer(StrongPasswordMixin, serializers.Model
         fields = ('id', 'email', 'password', 'first_name', 'last_name')
         extra_kwargs = {'password': {'write_only': True}}
 
+    def validate_email(self, value):
+        """Normalize and validate email"""
+        email = value.strip().lower()
+        if User.objects.filter(email=email).exists():
+            raise serializers.ValidationError("Email already registered.")
+        return email
+
     def create(self, validated_data):
         # Use create_user from your custom manager (no username)
         # Citizens can login immediately without email verification
+        email = validated_data['email'].strip().lower()
         user = User.objects.create_user(
-            email=validated_data['email'],
+            email=email,
             password=validated_data['password'],
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', ''),
+            first_name=validated_data.get('first_name', '').strip(),
+            last_name=validated_data.get('last_name', '').strip(),
             role='PC',
             is_active=True,
             is_verified=True,
