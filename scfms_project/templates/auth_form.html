@@ -197,12 +197,16 @@ document.getElementById("authForm").addEventListener("submit", async function(e)
                 }
             }
 
+            const successText = formType === "pc_register"
+                ? "Registration successful. Redirecting to your portal..."
+                : formType === "go_register"
+                    ? "Government registration successful. Redirecting to dashboard..."
+                    : "Login Successful!";
+
             Swal.fire({
                 icon: "success",
                 title: "Success",
-                text: formType === "pc_register"
-                    ? "Registration successful. Redirecting to login..."
-                    : "Login Successful!",
+                text: successText,
                 timer: 1000,
                 showConfirmButton: false
             });
@@ -212,9 +216,9 @@ document.getElementById("authForm").addEventListener("submit", async function(e)
                 if (formType === "pc_login") {
                     window.location.href = "/public/";
                 } else if (formType === "pc_register") {
-                    window.location.href = "/login/";
+                    window.location.href = "/public/";
                 } else if (formType === "go_register") {
-                    window.location.href = "/go-login/";
+                    window.location.href = "/go-dashboard/";
                 } else if (formType === "go_login") {
                     window.location.href = "/go-dashboard/";
                 } else {

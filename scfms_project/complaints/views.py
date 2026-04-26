@@ -179,13 +179,14 @@ class PCRedistrationView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        # Email verification disabled for citizen portal - users can login immediately
+        payload = _issue_login_response(user)
 
         return Response({
-            "message": "Registration successful. You can now login with your credentials.",
+            "message": "Registration successful. You are now logged in.",
             "user_id": user.id,
             "email": user.email,
             "email_verification_required": False,
+            **payload,
         }, status=status.HTTP_201_CREATED)
 
 
@@ -518,13 +519,15 @@ class GORegistrationView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        payload = _issue_login_response(user)
 
         return Response(
             {
-                'message': 'Government registration successful. You can now login.',
+                'message': 'Government registration successful. You are now logged in.',
                 'email': user.email,
                 'govt_id': user.govt_id,
                 'role': user.role,
+                **payload,
             },
             status=status.HTTP_201_CREATED
         )
@@ -543,7 +546,10 @@ class GOLoginView(APIView):
 
         try:
             if email:
-                user = User.objects.get(email=email)
+                try:
+                    user = User.objects.get(email=email)
+                except User.DoesNotExist:
+                    user = User.objects.get(email__iexact=email)
             elif govt_id:
                 user = User.objects.get(govt_id=govt_id)
             else:
