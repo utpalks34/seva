@@ -36,14 +36,15 @@ class PublicCitizenRegistrationSerializer(StrongPasswordMixin, serializers.Model
 
     def create(self, validated_data):
         # Use create_user from your custom manager (no username)
+        # Citizens can login immediately without email verification
         user = User.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
             role='PC',
-            is_active=False,
-            is_verified=False,
+            is_active=True,
+            is_verified=True,
         )
         return user
 

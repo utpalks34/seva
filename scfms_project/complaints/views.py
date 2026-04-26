@@ -180,13 +180,13 @@ class PCRedistrationView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        _send_verification_email(user)
+        # Email verification disabled for citizen portal - users can login immediately
 
         return Response({
-            "message": "Registration successful. Please verify your email before logging in.",
+            "message": "Registration successful. You can now login with your credentials.",
             "user_id": user.id,
             "email": user.email,
-            "email_verification_required": True,
+            "email_verification_required": False,
         }, status=status.HTTP_201_CREATED)
 
 
@@ -214,9 +214,10 @@ class PCLoginView(APIView):
             if not user.check_password(password):
                 return Response({'error': 'Invalid Credentials.'}, status=status.HTTP_400_BAD_REQUEST)
 
+            # Email verification check removed - citizens can login immediately after registration
             if not user.is_active:
                 return Response(
-                    {'error': 'Please verify your email before logging in.'},
+                    {'error': 'Your account has been deactivated.'},
                     status=status.HTTP_403_FORBIDDEN
                 )
 
