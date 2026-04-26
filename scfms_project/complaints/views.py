@@ -142,12 +142,11 @@ def go_login_view(request):
     """Government Official Login Form"""
     return render(request, 'auth_form.html', {
         'form_type': 'go_login',
-        'govt_notice': 'Government accounts are created by admin only. Use your official email, government ID, and the password set for your account. Contact admin if you need an ID or password setup.',
     })
 
 def go_register_view_html(request):
-    """Government self-registration is disabled; send users to login info."""
-    return redirect('go-login-html')
+    """Government self-registration page."""
+    return render(request, 'auth_form.html', {'form_type': 'go_register'})
 
 
 def complaint_form_view(request):
@@ -510,7 +509,7 @@ class AdminUserDetailView(generics.RetrieveUpdateAPIView):
 
 
 class GORegistrationView(generics.CreateAPIView):
-    """Controlled government onboarding for production/demo use."""
+    """Open government registration for demo use."""
     queryset = User.objects.all()
     serializer_class = GORegistrationSerializer
     permission_classes = (AllowAny,)
@@ -520,19 +519,11 @@ class GORegistrationView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
-        department = getattr(user, "_registered_department", "")
-        if user.is_active:
-            message = "Government account created and approved successfully."
-        else:
-            message = "Government account created. Approval is pending."
-
         return Response(
             {
-                'message': message,
+                'message': 'Government registration successful. You can now login.',
                 'email': user.email,
                 'govt_id': user.govt_id,
-                'department': department,
-                'approved': user.is_active,
                 'role': user.role,
             },
             status=status.HTTP_201_CREATED
@@ -564,7 +555,7 @@ class GOLoginView(APIView):
             return Response({'error': 'This account is not a Government or Admin account.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not user.is_active:
-            return Response({'error': 'Government account is pending approval.'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'Your government account has been deactivated.'}, status=status.HTTP_403_FORBIDDEN)
 
         if not user.check_password(password):
             return Response({'error': 'Invalid email/password combination.'}, status=status.HTTP_400_BAD_REQUEST)

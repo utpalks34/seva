@@ -115,15 +115,13 @@ class NotificationSerializer(serializers.ModelSerializer):
         return None
 
 
-class GORegistrationSerializer(serializers.ModelSerializer):
+class GORegistrationSerializer(StrongPasswordMixin, serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
-    department = serializers.CharField(write_only=True)
-    secret_key = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    govt_id = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'password', 'department', 'secret_key', 'govt_id', 'first_name', 'last_name')
-        read_only_fields = ('govt_id',)
+        fields = ('id', 'email', 'password', 'govt_id', 'first_name', 'last_name')
 
     def validate_email(self, value):
         value = value.lower().strip()
@@ -131,62 +129,30 @@ class GORegistrationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("A user with this email already exists.")
         return value
 
-    def validate_department(self, value):
-        department = value.strip()
-        if not department:
-            raise serializers.ValidationError("Department is required.")
-        if len(department) > 100:
-            raise serializers.ValidationError("Department name is too long.")
-        return department
-
-    def validate(self, attrs):
-        email = attrs['email']
-        secret_key = (attrs.get('secret_key') or '').strip()
-
-        allowed_domains = {domain.lower() for domain in getattr(settings, 'GOV_ALLOWED_EMAIL_DOMAINS', []) if domain}
-        allowed_emails = {addr.lower() for addr in getattr(settings, 'GOV_ALLOWED_EMAILS', []) if addr}
-        email_domain = email.split('@')[-1].lower()
-
-        domain_allowed = email_domain in allowed_domains or email in allowed_emails
-        secret_allowed = bool(getattr(settings, 'GOV_SECRET_KEY', '')) and secrets.compare_digest(
-            secret_key,
-            settings.GOV_SECRET_KEY,
-        )
-
-        if not domain_allowed and not secret_allowed:
-            raise serializers.ValidationError(
-                "Government registration requires an approved official email domain or a valid government onboarding secret."
-            )
-
-        attrs['email'] = email
-        attrs['department'] = attrs['department'].strip()
-        attrs['secret_validated'] = secret_allowed
-        return attrs
+    def validate_govt_id(self, value):
+        govt_id = value.strip().upper()
+        if govt_id and User.objects.filter(govt_id=govt_id).exists():
+            raise serializers.ValidationError("This Government ID is already in use.")
+        return govt_id
 
     def create(self, validated_data):
-        department = validated_data.pop('department')
-        validated_data.pop('secret_key', None)
-        secret_validated = validated_data.pop('secret_validated', False)
-
-        department_code = ''.join(ch for ch in department.upper() if ch.isalnum())[:6] or 'DEMO'
-        govt_id = f"{department_code}-{secrets.randbelow(9000) + 1000}"
+        govt_id = (validated_data.pop('govt_id', '') or '').strip().upper()
+        if not govt_id:
+            govt_id = f"GOV-{secrets.randbelow(900000) + 100000}"
         while User.objects.filter(govt_id=govt_id).exists():
-            govt_id = f"{department_code}-{secrets.randbelow(9000) + 1000}"
-
-        auto_approve = bool(secret_validated or getattr(settings, 'GOV_AUTO_APPROVE', False))
+            govt_id = f"GOV-{secrets.randbelow(900000) + 100000}"
 
         user = User.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
-            first_name=validated_data.get('first_name', department),
-            last_name=validated_data.get('last_name', ''),
+            first_name=validated_data.get('first_name', '').strip(),
+            last_name=validated_data.get('last_name', '').strip(),
             role='GO',
             govt_id=govt_id,
             is_staff=True,
-            is_active=auto_approve,
-            is_verified=auto_approve,
+            is_active=True,
+            is_verified=True,
         )
-        user._registered_department = department
         return user
 
 
